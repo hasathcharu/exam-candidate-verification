@@ -87,9 +87,27 @@ def compute_stroke_width_histogram(binary_image_inv):
     skeleton = cv2.ximgproc.thinning(binary_image_inv)
     distance_transform = cv2.distanceTransform(binary_image_inv, cv2.DIST_L2, 5)
     stroke_widths = distance_transform[skeleton > 0]
-    hist, _ = np.histogram(stroke_widths, bins=5, range=(0, np.max(stroke_widths)))
+    hist, _ = np.histogram(stroke_widths, bins=6, range=(0, np.max(stroke_widths)))
     return hist, stroke_widths
 
+def get_contour_areas(binary_inv):
+    largest_interior_contour = 0
+    largest_exterior_curve = 0
+    contours, hierarchy = cv2.findContours(binary_inv, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    if hierarchy is not None:
+        for i in range(len(hierarchy[0])):
+            if hierarchy[0][i][3] != -1:
+                area = cv2.contourArea(contours[i])
+                if area > largest_interior_contour:
+                    largest_interior_contour = area
+    
+    if hierarchy is not None:
+        for i in range(len(hierarchy[0])):
+            if hierarchy[0][i][3] == -1:
+                area = cv2.contourArea(contours[i])
+                if area > largest_exterior_curve:
+                    largest_exterior_curve = area
+    return largest_exterior_curve, largest_interior_contour
 
 def compute_hod(binary_image, pixels_per_cell=(16, 16), orientations=9):
     fd, _ = hog(
@@ -159,13 +177,16 @@ def run_length_pdf(bw, axis=0, L=60):
         if run and run<=L: hist[run-1]+=1
     return hist / hist.sum()
 
-def compute_slant_angle_histogram(binary_image_inv):
-    """Computes Slant Angle Histogram of an image using the Radon transform."""    
-    theta = np.linspace(-30, 30, 30)
-    radon_trans = radon(binary_image_inv, theta=theta, circle=True)
-    
-    slant_histogram = np.sum(radon_trans, axis=0)
-    return slant_histogram
+def compute_slant_angle_histogram(binary_inv, num_bins=9):
+    sobelx = cv2.Sobel(binary_inv, cv2.CV_64F, 1, 0, ksize=3)
+    sobely = cv2.Sobel(binary_inv, cv2.CV_64F, 0, 1, ksize=3)
+    sobelx[sobelx == 0] = 1e-6
+
+    angles = np.rad2deg(np.arctan2(sobely, sobelx))
+    angles = angles[(binary_inv > 0)]
+    angles = np.clip(angles, -90, 90)
+    hist, _ = np.histogram(angles, bins=num_bins, range=(-90, 90), density=False)
+    return hist
 
 
 def get_global_word_features(binary_line, line_height=180):
