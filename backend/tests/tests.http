@@ -1,0 +1,10 @@
+# Advanced Writer Verification
+POST http://localhost:8000/api/v1/predict/advanced-writer-verification
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="sample.png"
+Content-Type: text/plain
+
+< ./manual_wv/test.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
