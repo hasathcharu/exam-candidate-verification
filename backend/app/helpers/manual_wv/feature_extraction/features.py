@@ -13,6 +13,7 @@ def get_interior_contours(binary_image_inv):
     contours, hierarchy = cv2.findContours(
         binary_image_inv, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
     )
+    interior_areas = []
     num_interior_contours = 0
     interior_contours = np.zeros_like(binary_image_inv)
 
@@ -20,8 +21,11 @@ def get_interior_contours(binary_image_inv):
         for i in range(len(hierarchy[0])):
             if hierarchy[0][i][3] != -1:
                 num_interior_contours += 1
+                interior_areas.append(cv2.contourArea(contours[i]))
                 cv2.drawContours(interior_contours, contours, i, (255, 255, 255), 3)
-    return interior_contours, num_interior_contours
+    mean = np.mean(interior_areas) if interior_areas else 0
+    std = np.std(interior_areas) if interior_areas else 0
+    return interior_contours, num_interior_contours, mean, std
 
 
 def get_exterior_curves(binary_image_inv):
