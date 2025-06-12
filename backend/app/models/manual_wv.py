@@ -371,6 +371,4 @@ def perform_manual_writer_verification(img_path: str = "temp/manual_wv/samples/t
     y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
 
     process_explanations(test_features, model, scaler, threshold)
-    
-
     return "Same Writer" if y_pred == 0 else "Different Writer";
