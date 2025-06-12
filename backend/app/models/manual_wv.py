@@ -21,6 +21,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib
+import shutil
 matplotlib.use('Agg')
 
 FILE_PATH = os.path.dirname(__file__)
@@ -37,8 +38,8 @@ contour_hinge_hist_scaler = joblib.load(os.path.join(FILE_PATH, "../weights/cont
 CHAR_CONF_THRESHOLD = 0.5
 RESIZE_DIM = (40, 40)
 
-segment_folder = f"{FILE_PATH}/../temp/manual_wv/segment"
-feature_folder = f"{FILE_PATH}/../temp/manual_wv/features"
+segment_folder = f"{FILE_PATH}/../cache/manual_wv/segment"
+feature_folder = f"{FILE_PATH}/../cache/manual_wv/features"
 char_features = f"{feature_folder}/chars"
 line_features = f"{feature_folder}/line"
 contour_hinge_features = f"{feature_folder}/contour_hinge"
@@ -219,9 +220,9 @@ def prepare_all_features(sample: str = "test") -> None:
     line_df.to_parquet(f"{all_features}/{sample}.parquet", index=False)
 
 def train_model() -> None:
-    for file in os.listdir(f"{FILE_PATH}/../temp/manual_wv/samples"):
+    for file in os.listdir(f"{FILE_PATH}/../cache/manual_wv/samples"):
         if file.endswith(".png") and file.startswith("sample"):
-            img_path = os.path.join(f"{FILE_PATH}/../temp/manual_wv/samples", file)
+            img_path = os.path.join(f"{FILE_PATH}/../cache/manual_wv/samples", file)
             preprocess(img_path, sample=file.split(".")[0])
             extract_char_features(file.split(".")[0])
             extract_line_features(file.split(".")[0])
@@ -238,7 +239,7 @@ def train_model() -> None:
     train, val = train_test_split(all_features_df, test_size=0.2, random_state=42)
 
     train = scaler.fit_transform(train)
-    joblib.dump(scaler, os.path.join(FILE_PATH, "../temp/manual_wv/scaler.pkl"))
+    joblib.dump(scaler, os.path.join(FILE_PATH, "../cache/manual_wv/scaler.pkl"))
     val = scaler.transform(val)
     
     
@@ -258,12 +259,12 @@ def train_model() -> None:
         callbacks=[es],
     )
     
-    model.save_weights(os.path.join(FILE_PATH, "../temp/manual_wv/writer.weights.h5"))
+    model.save_weights(os.path.join(FILE_PATH, "../cache/manual_wv/writer.weights.h5"))
     
     y_scores = np.mean(np.square(val - model.predict(val)), axis=1)
     threshold = np.mean(y_scores) + np.std(y_scores)
     
-    with open(os.path.join(FILE_PATH, "../temp/manual_wv/threshold.txt"), 'w') as f:
+    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), 'w') as f:
         f.write(str(threshold))
 
 def predict_feature(x, idx, model):
@@ -301,10 +302,10 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
     plt.xlabel("Features")
     plt.ylabel("Reconstructed Error")
     plt.xticks(ticks=range(len(columns)), labels=columns, rotation=90)
-    plt.title(f"Reconstructed Error for Normal (A) and Test (B) Samples\nTest (B) Reconstructed Error: {np.mean(test_reconstructed):.2f}\nNormal (A) Reconstructed Error: {np.mean(normal_reconstructed):.2f}\nPrediction: {'Different Writer' if np.mean(test_reconstructed) > threshold else 'Same Writer'}")
+    plt.title(f"Reconstructed Error for Normal and Test Samples\nTest Reconstructed Error: {np.mean(test_reconstructed):.2f}\nNormal Reconstructed Error: {np.mean(normal_reconstructed):.2f}\nPrediction: {'Different Writer' if np.mean(test_reconstructed) > threshold else 'Same Writer'}")
     plt.tight_layout()
     plt.legend()
-    plt.savefig(os.path.join(FILE_PATH, "../temp/manual_wv/reconstructed_error.png"))
+    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/reconstructed_error.png"))
 
     pos_shap_values = pd.DataFrame(columns=columns, index=columns, data=np.zeros((len(columns), len(columns))), dtype=float)
     neg_shap_values = pd.DataFrame(columns=columns, index=columns, data=np.zeros((len(columns), len(columns))), dtype=float)
@@ -340,7 +341,7 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
         va='center'
     )
     plt.tight_layout()
-    plt.savefig(os.path.join(FILE_PATH, "../temp/manual_wv/heatmap.png"))
+    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/heatmap.png"))
 
     explanation = shap.Explanation(
         values=pos_sum,
@@ -350,25 +351,30 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
     )
     plt.figure(figsize=(15, 10))
     shap.plots.waterfall(explanation, show=False)
-    plt.savefig(os.path.join(FILE_PATH, "../temp/manual_wv/waterfall.png"), bbox_inches='tight', pad_inches=0.2)
+    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/waterfall.png"), bbox_inches='tight', pad_inches=0.2)
 
-def perform_manual_writer_verification(img_path: str = "temp/manual_wv/samples/test.png") -> bool:
+    shutil.copy(os.path.join(FILE_PATH, '../cache/manual_wv/samples/sample1.png'), os.path.join(FILE_PATH, '../cache/manual_wv/result/known.png'))
+    shutil.copy(os.path.join(FILE_PATH, '../cache/manual_wv/samples/test.png'), os.path.join(FILE_PATH, '../cache/manual_wv/result/test.png'))
+
+def perform_manual_writer_verification(img_path: str = "cache/manual_wv/samples/test.png") -> bool:
     preprocess(f"{FILE_PATH}/../{img_path}", sample="test")
     extract_char_features("test")
     extract_line_features("test")
     prepare_all_features("test")
     test_features = pd.read_parquet(f"{all_features}/test.parquet")
     test_features = test_features.drop(columns=["sample"])
-    scaler = joblib.load(os.path.join(FILE_PATH, "../temp/manual_wv/scaler.pkl"))
+    scaler = joblib.load(os.path.join(FILE_PATH, "../cache/manual_wv/scaler.pkl"))
     test_features = scaler.transform(test_features)
     model = build_global_autoencoder(test_features.shape[1])
-    model.load_weights(os.path.join(FILE_PATH, "../temp/manual_wv/writer.weights.h5"))
+    model.load_weights(os.path.join(FILE_PATH, "../cache/manual_wv/writer.weights.h5"))
     predict = model.predict(test_features, verbose=0)
     y_scores = np.mean(np.square(test_features - predict), axis=1)
     y_score = np.mean(y_scores)
-    with open(os.path.join(FILE_PATH, "../temp/manual_wv/threshold.txt"), 'r') as f:
+    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), 'r') as f:
         threshold = float(f.read().strip())
     y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
-
+    os.makedirs(f"{FILE_PATH}/../cache/manual_wv/result", exist_ok=True)
+    with open(os.path.join(FILE_PATH, "../cache/manual_wv/result/result.txt"), 'w') as f:
+        f.write(str(y_pred))
     process_explanations(test_features, model, scaler, threshold)
     return "Same Writer" if y_pred == 0 else "Different Writer";

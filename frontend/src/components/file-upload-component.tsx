@@ -1,0 +1,83 @@
+'use client';
+import { toast } from 'sonner';
+import { Toaster } from "@/components/ui/sonner"
+import {
+  FileUpload,
+  FileUploadDropzone,
+  FileUploadItem,
+  FileUploadItemDelete,
+  FileUploadItemMetadata,
+  FileUploadItemPreview,
+  FileUploadList,
+  FileUploadTrigger,
+} from '@/components/ui/file-upload';
+import { Upload, X } from 'lucide-react';
+import * as React from 'react';
+
+export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { limit?: number, value?: File[], onValueChange?: (files: File[]) => void }) {
+
+  const onFileReject = React.useCallback((file: File, message: string) => {
+    toast.error(message, {
+      description: `"${
+        file.name.length > 20 ? `${file.name.slice(0, 20)}...` : file.name
+      }" has been rejected.`,
+      duration: 3000,
+      
+    });
+  }, []);
+
+  return (
+    <FileUpload
+      maxFiles={limit}
+      maxSize={25 * 1024 * 1024}
+      className='w-full'
+      value={value}
+      onValueChange={onValueChange}
+      onFileReject={onFileReject}
+      required
+      multiple={limit > 1}
+    >
+      <FileUploadDropzone>
+        <div className='flex flex-col items-center gap-1 text-center'>
+          <div className='flex items-center justify-center rounded-full border p-2.5'>
+            <Upload className='size-6 text-muted-foreground' />
+          </div>
+          <p className='font-medium text-sm'>Drop your sample{limit > 1? 's':''} here!</p>
+          <p className='text-muted-foreground text-xs'>
+            Or click to browse (max {limit} {limit > 1 ? 'files' : 'file'}, up
+            to 25MB{limit > 1 ? ' each' : ''})
+          </p>
+        </div>
+        <FileUploadTrigger asChild>
+          <button className='btn btn-block'>Choose File</button>
+        </FileUploadTrigger>
+      </FileUploadDropzone>
+      <FileUploadList>
+        {value.map((file, index) => (
+          <FileUploadItem key={index} value={file}>
+            <FileUploadItemPreview />
+            <FileUploadItemMetadata />
+            <FileUploadItemDelete asChild>
+              <button className='btn btn-circle'>
+                <svg
+                  width='15'
+                  height='15'
+                  viewBox='0 0 15 15'
+                  fill='none'
+                  xmlns='http://www.w3.org/2000/svg'
+                >
+                  <path
+                    d='M5.5 1C5.22386 1 5 1.22386 5 1.5C5 1.77614 5.22386 2 5.5 2H9.5C9.77614 2 10 1.77614 10 1.5C10 1.22386 9.77614 1 9.5 1H5.5ZM3 3.5C3 3.22386 3.22386 3 3.5 3H5H10H11.5C11.7761 3 12 3.22386 12 3.5C12 3.77614 11.7761 4 11.5 4H11V12C11 12.5523 10.5523 13 10 13H5C4.44772 13 4 12.5523 4 12V4L3.5 4C3.22386 4 3 3.77614 3 3.5ZM5 4H10V12H5V4Z'
+                    fill='currentColor'
+                    fillRule='evenodd'
+                    clipRule='evenodd'
+                  ></path>
+                </svg>
+              </button>
+            </FileUploadItemDelete>
+          </FileUploadItem>
+        ))}
+      </FileUploadList>
+    </FileUpload>
+  );
+}

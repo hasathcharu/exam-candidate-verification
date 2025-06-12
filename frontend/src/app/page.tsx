@@ -1,6 +1,6 @@
 import NvCard from '@/components/nv-card';
 import AvCard from '@/components/av-card';
-import Image from 'next/image';
+import Footer from '@/components/footer';
 
 export default function App() {
   return (
@@ -19,19 +19,14 @@ export default function App() {
               </p>
               <div className='flex gap-10'>
                 <NvCard />
+                <div className='divider divider-horizontal'></div>
                 <AvCard />
               </div>
             </div>
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className='footer footer-center p-4 text-base-content'>
-        <p>
-          © {new Date().getFullYear()} Hikari Research. All rights reserved.
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

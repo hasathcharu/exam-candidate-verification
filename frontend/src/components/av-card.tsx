@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function NvCard() {
   return (
     <div className='text-justify card w-96 bg-base-100 shadow-sm'>
@@ -94,7 +96,7 @@ export default function NvCard() {
           </li>
         </ul>
         <div className='mt-6'>
-          <button className='btn btn-accent btn-block'>Get Started</button>
+          <Link href='/advanced-verification'><button className='btn btn-accent  btn-block'>Get Started</button></Link>
         </div>
       </div>
     </div>
