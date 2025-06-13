@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import LoadingDialog from '@/components/loading-dialog';
 
 export default function App() {
   const [files, setFiles] = useState<File[]>([]);
@@ -137,16 +138,7 @@ export default function App() {
                         </>
                       </span>
                     ) : (
-                      <>
-                        <div className='text-center'>
-                          <span className='loading loading-infinity w-16 bg-slate-500'></span>
-                          <br />
-                          <br />
-                          <AlertDialogTitle>
-                            Training your model
-                          </AlertDialogTitle>
-                        </div>
-                      </>
+                    <LoadingDialog title='Training Model...' />
                     )}
                   </AlertDialogContent>
                 </AlertDialog>

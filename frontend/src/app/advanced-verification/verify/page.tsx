@@ -10,6 +10,7 @@ import {
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import LoadingDialog from '@/components/loading-dialog';
 
 export default function App() {
   const router = useRouter();
@@ -30,10 +31,13 @@ export default function App() {
     const filename = `test${ext}`;
     formData.append(field, files[0], filename);
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API + 'predict/advanced-writer-verification', {
-        method: 'POST',
-        body: formData,
-      });
+      const res = await fetch(
+        process.env.NEXT_PUBLIC_API + 'predict/advanced-writer-verification',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const payload = await res.json();
       if (res.status !== 200) {
@@ -146,16 +150,7 @@ export default function App() {
                   onOpenChange={(next) => next && setOpen(true)}
                 >
                   <AlertDialogContent>
-                      <>
-                        <div className='text-center'>
-                          <span className='loading loading-infinity w-16 bg-slate-500'></span>
-                          <br />
-                          <br />
-                          <AlertDialogTitle>
-                            Generating report...
-                          </AlertDialogTitle>
-                        </div>
-                      </>
+                    <LoadingDialog title='Generating Report...' />
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
