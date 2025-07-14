@@ -40,6 +40,8 @@ def automatic_writer_verification():
 
     result = perform_automatic_writer_verification(sample1_path, sample2_path)
 
+    print(result)
+    
     return jsonify({
         "message": "Files received successfully",
         "known_file": sample1.filename,
