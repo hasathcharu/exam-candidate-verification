@@ -1,6 +1,6 @@
 from torchvision import transforms
 import cv2
-from utils.constants import DEVICE, FIXED_SIZE
+from ..utils.constants import DEVICE, FIXED_SIZE
 
 clip_transform = transforms.Compose([
     transforms.ToPILImage(),

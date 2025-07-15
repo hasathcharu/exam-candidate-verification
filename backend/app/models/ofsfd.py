@@ -2,9 +2,9 @@ import torch.nn as nn
 import torch
 import gdown
 import clip
-from helpers.ofsfd.utils.constants import DEVICE, MODEL_PATH_ID
+from ..helpers.ofsfd.utils.constants import DEVICE, MODEL_PATH_ID
 import matplotlib.pyplot as plt
-from helpers.ofsfd.preprocess.preprocess import preprocess
+from ..helpers.ofsfd.preprocess.preprocess import preprocess
 
 class SignatureVerifier(nn.Module):
     def __init__(self):
