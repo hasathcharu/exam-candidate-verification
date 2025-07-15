@@ -61,3 +61,4 @@ def signature_verification():
     # label, confidence = predict_signature_type("backend\tests\ofsfd\1_0.png")
     
     return jsonify({"label": label, "confidence": confidence}), 200
+
