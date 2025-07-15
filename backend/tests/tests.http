@@ -35,3 +35,20 @@ Content-Type: image/png
 
 < ./manual_wv/sample3.png
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Automatic Writer Verification
+POST http://localhost:8000/api/v1/predict/automatic-writer-verification
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0g
+
+------WebKitFormBoundary7MA4YWxkTrZu0g
+Content-Disposition: form-data; name="file1"; filename="sample1.png"
+Content-Type: image/png
+
+< ./automatic_wv/sample1.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file2"; filename="sample2.png"
+Content-Type: image/png
+
+< ./automatic_wv/sample2.png
+------WebKitFormBoundary7MA4YWxkTrZu0g--
