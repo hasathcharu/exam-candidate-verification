@@ -6,10 +6,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import cv2
 import numpy as np
-from tensorflow.keras.applications import VGG16
-from tensorflow.keras.layers import Input, Dense, Lambda, GlobalAveragePooling2D
 from keras.saving import register_keras_serializable
-from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K
 
 FILE_PATH = os.path.dirname(__file__)
@@ -47,17 +44,15 @@ custom_objects={
 safe_mode=False
 )
 
+FEATURE_EXTRACTOR = MODEL.get_layer("cnn_backbone")
+
 def preprocess_image(image, save_path=None):
     image = read_image(image)
-
     if image is None:
         raise InternalServerError("Issues when loading images. Please try again.")
-    
     _, binary_image = remove_rules(image)
-
     if save_path is not None:
         plt.imsave(save_path, binary_image, cmap="gray")
-
     return binary_image
 
 def preprocess_image_for_vgg16(img_path):
@@ -71,34 +66,57 @@ def preprocess_image_for_vgg16(img_path):
     img = np.expand_dims(img, axis=0)
     return img
 
+def compute_embeddings(patches):
+    embeddings = []
+    for patch in patches:
+        input = preprocess_image_for_vgg16(patch)
+        embedding = FEATURE_EXTRACTOR.predict(input)
+        embeddings.append(embedding[0])
+    embeddings = np.stack(embeddings, axis=0)  
+    avg_embedding = np.mean(embeddings, axis=0)
+    return avg_embedding 
+
+def preprocess_and_create_textures(input_path, binary_output_path, textures_output_dir, prefix):
+    binary_image = preprocess_image(input_path, binary_output_path)
+    create_texture(
+        binary_image,
+        output_dir=textures_output_dir,
+        prefix=prefix
+    )
+
+    patch_files = [
+        os.path.join(textures_output_dir, fname)
+        for fname in os.listdir(textures_output_dir)
+        if fname.endswith(".png")
+    ]
+    return patch_files
+
+
 def perform_automatic_writer_verification(sample1_path, sample2_path):
     output_dir = os.path.join(FILE_PATH,"../cache/automatic_wv/binary")
     os.makedirs(output_dir, exist_ok=True)
 
-    binary_image1 = preprocess_image(sample1_path, os.path.join(output_dir, "binary1.png"))
-    binary_image2 = preprocess_image(sample2_path, os.path.join(output_dir, "binary2.png"))
-
     texture_base_dir = os.path.join(FILE_PATH, "../cache/automatic_wv/textures")
+    os.makedirs(texture_base_dir, exist_ok=True)
 
-    patches1 = create_texture(
-        binary_image1,
-        output_dir=os.path.join(texture_base_dir, "image1"),
+    patch1_files = preprocess_and_create_textures(
+        input_path=sample1_path,
+        binary_output_path=os.path.join(output_dir, "binary1.png"),
+        textures_output_dir=os.path.join(texture_base_dir, "image1"),
         prefix="image1"
     )
 
-    patches2 = create_texture(
-        binary_image2,
-        output_dir=os.path.join(texture_base_dir, "image2"),
+    patch2_files = preprocess_and_create_textures(
+        input_path=sample2_path,
+        binary_output_path=os.path.join(output_dir, "binary2.png"),
+        textures_output_dir=os.path.join(texture_base_dir, "image2"),
         prefix="image2"
     )
 
-    patch1 = os.path.join(texture_base_dir, "image1", "image1_T1.png")
-    patch2 = os.path.join(texture_base_dir, "image2", "image2_T9.png")
+    embedding1 = compute_embeddings(patch1_files)
+    embedding2 = compute_embeddings(patch2_files)
 
-    input1 = preprocess_image_for_vgg16(patch1)
-    input2 = preprocess_image_for_vgg16(patch2)
-
-    distance = MODEL.predict([input1, input2])[0][0]  
+    distance = np.linalg.norm(embedding1 - embedding2) 
 
     threshold = 0.7173469662666321
     same_writer = distance <= threshold
@@ -106,5 +124,5 @@ def perform_automatic_writer_verification(sample1_path, sample2_path):
     return {
         "distance": float(distance),
         "threshold": threshold,
-        "same_writer": same_writer
+        "same_writer": bool(same_writer)
     }
