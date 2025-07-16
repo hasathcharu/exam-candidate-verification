@@ -1,52 +1,48 @@
-"use client";
-import Footer from "@/components/footer";
-import { FileUploadComponent } from "@/components/file-upload-component";
-import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import LoadingDialog from "@/components/loading-dialog";
+'use client';
+import Footer from '@/components/footer';
+import { FileUploadComponent } from '@/components/file-upload-component';
+import { useState } from 'react';
+import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import LoadingDialog from '@/components/loading-dialog';
 
 export default function App() {
-  const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [open, setOpen] = useState(false);
+  const [label, setLabel] = useState('');
+  const [confidence, setConfidence] = useState(0.0);
   async function handleVerifier() {
     if (files.length < 1) {
-      toast.error("Please upload a test sample.");
+      toast.error('Please upload a test sample.');
       return;
     }
     setOpen(true);
     const formData = new FormData();
     const field = `sign_file`;
-    const ext = files[0].name.includes(".")
-      ? files[0].name.slice(files[0].name.lastIndexOf("."))
-      : ".png";
+    const ext = files[0].name.includes('.')
+      ? files[0].name.slice(files[0].name.lastIndexOf('.'))
+      : '.png';
     const filename = `test${ext}`;
     formData.append(field, files[0], filename);
     try {
       const res = await fetch(
-        process.env.NEXT_PUBLIC_API + "predict/signature-verification",
+        process.env.NEXT_PUBLIC_API + 'predict/signature-verification',
         {
-          method: "POST",
+          method: 'POST',
           body: formData,
         }
       );
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       const payload = await res.json();
       if (res.status !== 200) {
-        throw new Error(payload.message || "Training failed");
+        throw new Error(payload.message || 'Signature detection failed');
       }
-      router.push("/advanced-verification/result");
+      setLabel(payload.label);
+      setConfidence((payload.confidence*100).toFixed(2));
       setOpen(false);
     } catch (err) {
       setOpen(false);
-      toast.error("Model training failed. Please try again later.");
+      toast.error('Signature detection failed. Please try again later.');
       console.log(err);
     }
   }
@@ -108,9 +104,10 @@ export default function App() {
                   onOpenChange={(next) => next && setOpen(true)}
                 >
                   <AlertDialogContent>
-                    <LoadingDialog title='Generating Report...' />
+                    <LoadingDialog title='Detecting signature...' />
                   </AlertDialogContent>
                 </AlertDialog>
+                {label != "" && confidence} {"%  "} {label}
               </div>
             </div>
           </div>
