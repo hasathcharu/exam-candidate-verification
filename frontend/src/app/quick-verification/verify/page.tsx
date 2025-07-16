@@ -52,24 +52,24 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen pt-10">
+    <div className='flex flex-col h-screen pt-10'>
       {/* Main content */}
-      <main className="flex-grow">
-        <div className="hero h-full">
-          <div className="hero-content">
-            <div className="max-w-xl">
-              <h1 className="text-3xl font-bold text-center mb-3">
+      <main className='flex-grow'>
+        <div className='hero h-full'>
+          <div className='hero-content'>
+            <div className='max-w-xl'>
+              <h1 className='text-3xl font-bold text-center mb-3'>
                 Quick Writer Verification
               </h1>
-              <h3 className="text-1xl font-bold">
+              <h3 className='text-1xl font-bold'>
                 Signature Forgery Detection
               </h3>
-              <p className="py-6 text-md">
+              <p className='py-6 text-md'>
                 Please upload the signature sample you wish to verify. The
                 system will determine whether the signature appears genuine or
                 forged with the confidence level.
               </p>
-              <h2 className="py-6 text-md font-bold">
+              <h2 className='py-6 text-md font-bold'>
                 Upload Questioned Signature Sample
               </h2>
               <FileUploadComponent
@@ -79,23 +79,23 @@ export default function App() {
               />
               <br />
               <br />
-              <div className="text-center w-full justify-center">
+              <div className='text-center w-full justify-center'>
                 <button
-                  className="btn btn-primary btn-soft btn-lg btn-wide disabled:opacity-50 disabled:"
+                  className='btn btn-primary btn-soft btn-lg btn-wide disabled:opacity-50 disabled:'
                   onClick={handleVerifier}
                 >
                   <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24px"
-                    height="24px"
-                    viewBox="0 0 24 24"
-                    fill="none"
+                    xmlns='http://www.w3.org/2000/svg'
+                    width='24px'
+                    height='24px'
+                    viewBox='0 0 24 24'
+                    fill='none'
                   >
                     <path
-                      d="M6.8008 11.7834L8.07502 11.9256C9.09772 12.0398 9.90506 12.8507 10.0187 13.8779C10.1062 14.6689 10.6104 15.3515 11.3387 15.665L13 16.3547M13 16.3547L9.48838 19.8818C8.00407 21.3727 5.59754 21.3727 4.11323 19.8818C2.62892 18.391 2.62892 15.9738 4.11323 14.4829L14.8635 3.68504L20.2387 9.08398L18.429 10.9017M13 16.3547L16 13.3414M21 9.84867L14.1815 3"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
+                      d='M6.8008 11.7834L8.07502 11.9256C9.09772 12.0398 9.90506 12.8507 10.0187 13.8779C10.1062 14.6689 10.6104 15.3515 11.3387 15.665L13 16.3547M13 16.3547L9.48838 19.8818C8.00407 21.3727 5.59754 21.3727 4.11323 19.8818C2.62892 18.391 2.62892 15.9738 4.11323 14.4829L14.8635 3.68504L20.2387 9.08398L18.429 10.9017M13 16.3547L16 13.3414M21 9.84867L14.1815 3'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      strokeLinecap='round'
                     />
                   </svg>
                   Test Sample
@@ -108,7 +108,7 @@ export default function App() {
                   onOpenChange={(next) => next && setOpen(true)}
                 >
                   <AlertDialogContent>
-                    <LoadingDialog title="Generating Report..." />
+                    <LoadingDialog title='Generating Report...' />
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
