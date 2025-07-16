@@ -179,8 +179,8 @@ def perform_pairwise_automatic_writer_verification(file1_normal_path, file1_fast
             scores["1F_vs_2F"],
         ]
     ])
-    prob = clf.predict_proba(X_new)[0,1]
     label = clf.predict(X_new)[0]
+    prob = clf.predict_proba(X_new)[0,label]
 
     return {
         "probability": float(prob),
