@@ -3,12 +3,9 @@ import torch
 import gdown
 import os
 import clip
-from ..helpers.ofsfd.utils.constants import DEVICE
+from ..helpers.ofsfd.utils.constants import DEVICE, MODEL_PATH, MODEL_PATH_ID
 import matplotlib.pyplot as plt
 from ..helpers.ofsfd.preprocess.preprocess import preprocess
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "best_model", "ofsfd.pth")
 
 class SignatureVerifier(nn.Module):
     def __init__(self):
@@ -45,7 +42,11 @@ class SignatureVerifier(nn.Module):
         return logits
     
 def predict_signature_type(image_path, model_path = MODEL_PATH):
-    # gdown.download(f"https://drive.google.com/uc?id={MODEL_PATH_ID}", model_path, quiet=False)
+    if not os.path.exists(model_path):
+        print(f"Model file not found at {model_path}. Downloading...")
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        gdown.download(f"https://drive.google.com/uc?id={MODEL_PATH_ID}", model_path, quiet=False)
+        
     model = SignatureVerifier().to(DEVICE)
     model.load_state_dict(torch.load(model_path, map_location=DEVICE))
     model.eval()
