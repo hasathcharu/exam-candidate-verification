@@ -1,6 +1,8 @@
 from torchvision import transforms
 import cv2
-from ..utils.constants import DEVICE, FIXED_SIZE
+import os
+from ..utils.constants import DEVICE, FIXED_SIZE, DATA_PATH
+from ..preprocess.preprocess_phase_1 import remove_rules
 
 clip_transform = transforms.Compose([
     transforms.ToPILImage(),
@@ -12,8 +14,7 @@ clip_transform = transforms.Compose([
 ])
 
 def preprocess(image_path):
-    input_img = cv2.imread(image_path)
-    input_img = cv2.resize(input_img, FIXED_SIZE)
+    input_img = preprocess_phase_1(image_path)
 
     rgb_img = cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB)
 
@@ -23,3 +24,13 @@ def preprocess(image_path):
         tensor_image = tensor_image.unsqueeze(0)  # [1, 3, 224, 224] CLIP expects batched inputs
 
     return input_img, tensor_image.to(DEVICE)
+
+BINARY_OUTPUT_ROOT_PATH = f"{DATA_PATH}/binary"
+
+def preprocess_phase_1(input_path):
+    output_path = os.path.join(BINARY_OUTPUT_ROOT_PATH, "test.png")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)   
+
+    image, binary = remove_rules(input_path)
+    cv2.imwrite(output_path, binary) 
+    return binary
