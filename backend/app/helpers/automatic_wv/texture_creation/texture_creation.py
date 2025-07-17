@@ -72,8 +72,8 @@ def segment_words(lines):
     return cropped_words
 
 def generate_texture(cropped_words, file_name="unknown"):
-    canvas_height = 1400
-    canvas_width = 1400
+    canvas_height = 950
+    canvas_width = 950
     if not cropped_words:
         print(f"[WARNING] No cropped words for file: {file_name}")
         return np.ones((canvas_height, canvas_width), dtype=np.uint8) * 255
@@ -150,7 +150,7 @@ def generate_texture(cropped_words, file_name="unknown"):
         y_offset += max_row_height + row_spacing
         row_index += 1
 
-    crop_size = 1350
+    crop_size = 900
 
     h, w = texture.shape
     y_start = (h - crop_size) // 2
@@ -169,8 +169,8 @@ def split_texture(texture):
     patch_size = 450
     patches = []
 
-    for i in range(3):  # Rows
-        for j in range(3):  # Columns
+    for i in range(2):  # Rows
+        for j in range(2):  # Columns
             y_start = i * patch_size
             x_start = j * patch_size
             patch = texture[y_start:y_start + patch_size, x_start:x_start + patch_size]
