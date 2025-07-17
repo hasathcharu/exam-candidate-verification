@@ -186,4 +186,3 @@ def perform_pairwise_automatic_writer_verification(file1_normal_path, file1_fast
         "probability": float(prob),
         "same_writer": bool(label == 0)
     }
-        
