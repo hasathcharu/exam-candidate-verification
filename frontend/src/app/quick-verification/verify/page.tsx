@@ -38,7 +38,7 @@ export default function App() {
         throw new Error(payload.message || 'Signature detection failed');
       }
       setLabel(payload.label);
-      setConfidence((payload.confidence*100).toFixed(2));
+      setConfidence(payload.confidence);
       setOpen(false);
     } catch (err) {
       setOpen(false);
@@ -98,7 +98,6 @@ export default function App() {
                 </button>
                 <br />
                 <br />
-
                 <AlertDialog
                   open={open}
                   onOpenChange={(next) => next && setOpen(true)}
@@ -107,7 +106,7 @@ export default function App() {
                     <LoadingDialog title='Detecting signature...' />
                   </AlertDialogContent>
                 </AlertDialog>
-                {label != "" && confidence} {"%  "} {label}
+                {label != '' && (confidence*100).toFixed(2)} {'%  '} {label}
               </div>
             </div>
           </div>
