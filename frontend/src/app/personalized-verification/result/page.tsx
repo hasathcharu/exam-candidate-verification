@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Markdown from '@/components/ui/markdown';
 import ImageViewer from '@/components/ui/image-viewer';
+import Emphasis from '@/components/ui/emphasis';
 
 export default function App() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function App() {
         }
         setLoaded(true);
       } catch (err: any) {
-        router.push('/advanced-verification');
+        router.push('/personalized-verification');
         console.log(err);
       }
     };
@@ -45,7 +46,7 @@ export default function App() {
         method: 'GET',
       });
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      router.push('/advanced-verification');
+      router.push('/personalized-verification');
       setResetButtonLoading(false);
     } catch (err: any) {
       toast.error('Resetting model failed. Something went wrong.');
@@ -61,22 +62,16 @@ export default function App() {
             <div className='hero-content'>
               <div className='max-w-[1024px]'>
                 <h1 className='text-3xl font-bold text-center'>
-                  Advanced Writer Verification Report
+                  Personalized Writer Verification Report
                 </h1>
                 <br />
                 {differentWriter ? (
                   <h2 className='text-2xl font-bold text-center'>
-                    Written by{' '}
-                    <span className='bg-red-400 py-1 px-2 rounded-sm'>
-                      Different Writers
-                    </span>
+                    Written by <Emphasis type='red'>Different Writers</Emphasis>
                   </h2>
                 ) : (
                   <h2 className='text-2xl font-bold text-center'>
-                    Written by the{' '}
-                    <span className='bg-green-400 py-1 px-2 rounded-sm'>
-                      Same Writer
-                    </span>
+                    Written by the <Emphasis type='green'>Same Writer</Emphasis>
                   </h2>
                 )}
                 {differentWriter ? (
@@ -92,38 +87,37 @@ export default function App() {
                     actions based on the below report.
                   </p>
                 )}
-                <h2 className='py-6 text-lg mx-auto font-bold max-w-3xl'>
-                  Explanation
+                                <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
+                  Samples
+                </h2>
+                <div className='flex gap-10 max-w-3xl mx-auto'>
+                  <div className='flex-1 w-full h-full'>
+                    <h3 className='text-center mb-2 font-bold'>Known Sample</h3>
+                    {/* <div className='w-full h-full'> */}
+                      <ImageViewer
+                        src={process.env.NEXT_PUBLIC_API + 'results/known.png'}
+                        alt='Known Sample'
+                        className='w-full object-fill h-56 rounded-lg shadow-md'
+                      />
+                    {/* </div> */}
+                  </div>
+                  <div className='flex-1 w-full h-full'>
+                    <h3 className='text-center mb-2 font-bold'>Test Sample</h3>
+                    {/* <div className='w-full h-full'> */}
+                      <ImageViewer
+                        src={process.env.NEXT_PUBLIC_API + 'results/test.png'}
+                        alt='Test Sample'
+                        className='w-full object-fill h-56 rounded-lg shadow-md'
+                      />
+                    {/* </div> */}
+                  </div>
+                </div>
+                <h2 className='py-6 pb-1 text-lg mx-auto font-bold max-w-3xl'>
+                  <Emphasis type='ai'>AI Explanation</Emphasis>
                 </h2>
                 <div className='py-6 mx-auto'>
                   <Markdown text={description} />
                 </div>
-                <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
-                  Samples
-                </h2>
-                <div className='flex gap-10 mb-10 max-w-3xl mx-auto'>
-                  <div className='flex-1'>
-                    <h3 className='text-center mb-2 font-bold'>Known Sample</h3>
-                    <div className='relative w-full h-full'>
-                      <ImageViewer
-                        src={process.env.NEXT_PUBLIC_API + 'results/known.png'}
-                        alt='Known Sample'
-                        className='h-full rounded-lg shadow-md'
-                      />
-                    </div>
-                  </div>
-                  <div className='flex-1'>
-                    <h3 className='text-center mb-2 font-bold'>Test Sample</h3>
-                    <div className='relative'>
-                      <ImageViewer
-                        src={process.env.NEXT_PUBLIC_API + 'results/test.png'}
-                        alt='Test Sample'
-                        className='h-full rounded-lg shadow-md'
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
                   Reconstruction Errors
                 </h2>
@@ -154,7 +148,7 @@ export default function App() {
                 <br />
                 <br />
                 <div className='text-center w-full justify-center'>
-                  <Link href='/advanced-verification'>
+                  <Link href='/personalized-verification'>
                     <button className='btn btn-primary btn-soft btn-lg btn-wide'>
                       <svg
                         xmlns='http://www.w3.org/2000/svg'

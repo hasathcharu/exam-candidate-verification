@@ -59,7 +59,7 @@ export default function App() {
           <div className='hero-content'>
             <div className='max-w-xl'>
               <h1 className='text-3xl font-bold text-center'>
-                Advanced Writer Verification
+                Personalized Writer Verification
               </h1>
               <p className='py-6 text-md'>
                 This verification takes a bit longer than the normal
@@ -114,15 +114,15 @@ export default function App() {
                               Training Complete!
                             </AlertDialogTitle>
                             <br/>
-                            <Link href='/advanced-verification'>
+                            <Link href='/personalized-verification'>
                                 <button
-                                    className='btn btn-primary btn-soft btn-lg btn-wide'
-                                    onClick={()=> router.push('/advanced-verification/result')}
+                                    className='btn btn-primary btn-soft btn-xl btn-wide'
+                                    onClick={()=> router.push('/personalized-verification/result')}
                                   >
                                     <svg
                                       xmlns='http://www.w3.org/2000/svg'
-                                      width='24px'
-                                      height='24px'
+                                      width='28px'
+                                      height='28px'
                                       viewBox='0 0 24 24'
                                       fill='none'
                                     >

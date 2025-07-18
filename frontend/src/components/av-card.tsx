@@ -6,7 +6,7 @@ export default function NvCard() {
       <div className='card-body'>
         {/* <span className='badge badge-xs badge-accent'>Detailed & Explained</span> */}
         <div className='flex justify-between'>
-          <h2 className='text-3xl font-bold'>Detailed Verification</h2>
+          <h2 className='text-3xl font-bold'>Personalized Verification</h2>
         </div>
         <ul className='mt-6 flex flex-col gap-2 text-xs'>
           <li>
@@ -96,7 +96,7 @@ export default function NvCard() {
           </li>
         </ul>
         <div className='mt-6'>
-          <Link href='/advanced-verification'><button className='btn btn-accent  btn-block'>Get Started</button></Link>
+          <Link href='/personalized-verification'><button className='btn btn-accent  btn-block'>Get Started</button></Link>
         </div>
       </div>
     </div>
