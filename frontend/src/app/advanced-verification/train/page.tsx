@@ -10,11 +10,13 @@ import {
 import { toast } from 'sonner';
 import Link from 'next/link';
 import LoadingDialog from '@/components/loading-dialog';
+import { useRouter } from 'next/navigation';
 
 export default function App() {
   const [files, setFiles] = useState<File[]>([]);
   const [open, setOpen] = useState(false);
   const [trainingComplete, setTrainingComplete] = useState(false);
+  const router = useRouter();
   async function handleTrainVerifier() {
     if (files.length < 2) {
       toast.error(
@@ -115,7 +117,7 @@ export default function App() {
                             <Link href='/advanced-verification'>
                                 <button
                                     className='btn btn-primary btn-soft btn-lg btn-wide'
-                                    onClick={handleTrainVerifier}
+                                    onClick={()=> router.push('/advanced-verification/result')}
                                   >
                                     <svg
                                       xmlns='http://www.w3.org/2000/svg'

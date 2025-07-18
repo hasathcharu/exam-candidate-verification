@@ -52,3 +52,21 @@ Content-Type: image/png
 
 < ./automatic_wv/sample2.png
 ------WebKitFormBoundary7MA4YWxkTrZu0g--
+
+###
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+Content-Type: application/json
+X-goog-api-key: {{$dotenv GEMINI_API}}
+
+{
+  "contents": [
+    {
+      "parts": [
+        {
+          "text": "Can you explain the difference between CNN and RNN in deep learning?"
+        }
+      ]
+    }
+  ]
+}
+

@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import LoadingDialog from '@/components/loading-dialog';
 
 export default function App() {
@@ -47,7 +46,7 @@ export default function App() {
       setOpen(false);
     } catch (err: any) {
       setOpen(false);
-      toast.error('Model training failed. Please try again later.');
+      toast.error('Writer verification failed. Please try again later.');
       console.log(err);
     }
   }

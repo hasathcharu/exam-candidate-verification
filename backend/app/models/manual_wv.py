@@ -1,6 +1,7 @@
-from flask import jsonify
+from flask import json, jsonify
 import numpy as np
 import shap
+from sklearn.metrics import auc, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
@@ -22,6 +23,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib
 import shutil
+from google import genai
+from google.genai import types
+
+client = genai.Client()
+
 matplotlib.use('Agg')
 
 FILE_PATH = os.path.dirname(__file__)
@@ -44,6 +50,96 @@ char_features = f"{feature_folder}/chars"
 line_features = f"{feature_folder}/line"
 contour_hinge_features = f"{feature_folder}/contour_hinge"
 all_features = f"{feature_folder}/all"
+
+desc_columns = [
+    "Number of Black Pixels",
+    "Gray Level Threshold",
+    "Entropy of Gray Values",
+    "Number of Interior Contours",
+    "Mean area of Interior Contours",
+    "Number of Exterior Curves",
+    "Number of Ultra-Fine Strokes",
+    "Number of Very Fine Strokes",
+    "Number of Fine Strokes",
+    "Number of Medium Strokes",
+    "Number of Bold Strokes",
+    "Number of Heavy Strokes",
+    "Mean Gap Between Words",
+    "Standard Deviation of Gap Between Words",
+    "Number of Words",
+    "Chaincode Histogram Right",
+    "Chaincode Histogram Down-Right",
+    "Chaincode Histogram Down",
+    "Chaincode Histogram Down-Left",
+    "Chaincode Histogram Left",
+    "Chaincode Histogram Up-Left",
+    "Chaincode Histogram Up",
+    "Chaincode Histogram Up-Right",
+    "Primary Contour-Curvature Pattern",
+    "Secondary Contour-Curvature Pattern",
+    "Tertiary Contour-Curvature Pattern",
+    "Quaternary Contour-Curvature Pattern",
+    "Fifth Contour-Curvature Pattern",
+    "Sixth Contour-Curvature Pattern",
+    "Seventh Contour-Curvature Pattern",
+    "Eighth Contour-Curvature Pattern",
+    "Ninth Contour-Curvature Pattern",
+    "Tenth Contour-Curvature Pattern",
+    "Eleventh Contour-Curvature Pattern",
+    "Twelfth Contour-Curvature Pattern",
+    "Thirteenth Contour-Curvature Pattern",
+    "Fourteenth Contour-Curvature Pattern",
+    "Fifteenth Contour-Curvature Pattern",
+    "Number of Strong Leftward Slant Components",
+    "Number of Moderate-Strong Left Slant Components",
+    "Number of Moderate Left Slant Components",
+    "Number of Slight Left Slant Components",
+    "Number of Near Vertical Orientation Components",
+    "Number of Slight Right Slant Components",
+    "Number of Moderate Right Slant Components",
+    "Number of Moderate-Strong Right Slant Components",
+    "Number of Strong Rightward Slant Components",
+    "Number of Pixels in the Upper Region of the Line",
+    "Number of Pixels in the Middle Region of the Line",
+    "Number of Pixels in the Lower Region of the Line",
+    "Letter 'e' Shape Descriptor 1",
+    "Letter 'e' Shape Descriptor 2",
+    "Letter 'e' Shape Descriptor 3",
+    "Letter 'e' Shape Descriptor 4",
+    "Letter 'e' Shape Descriptor 5",
+    "Letter 'e' Shape Descriptor 6",
+    "Letter 'e' Shape Descriptor 7",
+    "Letter 'e' Shape Descriptor 8",
+    "Letter 'e' Shape Descriptor 9"
+  ]
+
+prompt = """
+You are a well paid, well esteemed, handwriting-forensics analyst. 
+I will give you:  
+• A list of feature names (columns).  
+• Two arrays of reconstruction errors:    
+         - normal_reconstructed (the average error for known samples)     
+         - test_reconstructed (the error for the sample under test)   
+• An array of SHAP positive contributions (pos_sum) indicating each feature's push toward the model's prediction.   
+• A decision threshold for anomaly detection.   
+• A binary prediction (1 = different writer, 0 = same writer).  
+
+Your task (in under 400 words, with clear paragraph breaks, without numbered headings):  
+
+1. Identify the top 5 features with the highest SHAP positive values.   
+2. For each of those features, state in tabular form:      
+      a. The test sample's reconstruction error vs. the normal average.          
+      c. A plain-English explanation of what a human should look for in actual handwriting (e.g., “number of exterior curves: normally, the writer tends to join letters, while this sample shows more disjoint strokes”).  
+3. Summarize why the model classified this as an imposter (or genuine) based on both SHAP and reconstruction errors.
+
+Explain it like you are explaining to a secondary schooler, and maintain a warm and professional tone, so that anyone can understand. 
+
+Here is the data in JSON format:
+
+{json}
+"""
+
+system_instruction = "You are a well paid, well esteemed, handwriting-forensics analyst. You will be given a JSON object with the data and you will have to explain it in under 400 words, with clear paragraph breaks, without numbered headings. Do not greet the user, just explain the data, and use a warm and professional tone, so that anyone can understand, in third person."
 
 local_feature_headers = [
     "sample",
@@ -219,6 +315,15 @@ def prepare_all_features(sample: str = "test") -> None:
     line_df = pd.concat([line_df, char_out_df], axis=1)
     line_df.to_parquet(f"{all_features}/{sample}.parquet", index=False)
 
+def compute_eer(y_true, y_scores):
+    fpr, tpr, thresholds = roc_curve(y_true, y_scores)
+    fnr = 1 - tpr
+    eer_threshold_idx = np.argmin(np.abs(fpr - fnr))
+    eer = (fpr[eer_threshold_idx] + fnr[eer_threshold_idx]) / 2
+    auc_roc = auc(fpr, tpr)
+    eer_threshold = thresholds[eer_threshold_idx]
+    return eer, auc_roc, eer_threshold
+
 def train_model() -> None:
     for file in os.listdir(f"{FILE_PATH}/../cache/manual_wv/samples"):
         if file.endswith(".png") and file.startswith("sample"):
@@ -262,7 +367,18 @@ def train_model() -> None:
     model.save_weights(os.path.join(FILE_PATH, "../cache/manual_wv/writer.weights.h5"))
     
     y_scores = np.mean(np.square(val - model.predict(val)), axis=1)
-    threshold = np.mean(y_scores) + np.std(y_scores)
+    val_other = pd.read_parquet(os.path.join(FILE_PATH, "../weights/val_data.parquet"))
+    val_other = val_other.sample(n=len(val), random_state=42)
+    val_other = val_other.drop(columns=["sample"])
+    val_other = scaler.transform(val_other)
+    val_all = np.vstack([val, val_other])
+    val_reconstructed = model.predict(val_all, verbose=0)
+    y_scores = np.mean(np.square(val_all - val_reconstructed), axis=1)
+    labels = np.concatenate([
+        np.zeros(len(val), dtype=int),
+        np.ones(len(val_other), dtype=int)
+    ])
+    _, _, threshold = compute_eer(labels, y_scores)
     
     with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), 'w') as f:
         f.write(str(threshold))
@@ -283,7 +399,7 @@ def build_feature_error_model(autoencoder, idx: int):
 def predict(x, model):
     return np.square(x - model.predict(x, verbose=0))
 
-def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, scaler, threshold) -> None:
+def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, scaler, threshold, y_pred) -> None:
     normal_features = pd.DataFrame()
     for file in os.listdir(all_features):
         if file.endswith(".parquet") and file.startswith("sample"):
@@ -301,7 +417,7 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
     plt.plot(normal_reconstructed, label="Normal Reconstructed Error")
     plt.xlabel("Features")
     plt.ylabel("Reconstructed Error")
-    plt.xticks(ticks=range(len(columns)), labels=columns, rotation=90)
+    plt.xticks(ticks=range(len(columns)), labels=desc_columns, rotation=90)
     plt.title(f"Reconstructed Error for Normal and Test Samples\nTest Reconstructed Error: {np.mean(test_reconstructed):.2f}\nNormal Reconstructed Error: {np.mean(normal_reconstructed):.2f}\nPrediction: {'Different Writer' if np.mean(test_reconstructed) > threshold else 'Same Writer'}")
     plt.tight_layout()
     plt.legend()
@@ -329,14 +445,14 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
     plt.ylabel("Target (Reconstructed) Features")
     plt.xticks(
         ticks=np.arange(len(columns)) + 0.5,
-        labels=columns,
+        labels=desc_columns,
         rotation=90,
         ha='center'
     )
 
     plt.yticks(
         ticks=np.arange(len(columns)) + 0.5,
-        labels=columns,
+        labels=desc_columns,
         rotation=0,
         va='center'
     )
@@ -347,7 +463,7 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
         values=pos_sum,
         base_values=np.mean(predict(background_set, model)),
         data=np.mean(test_features, axis=0),
-        feature_names=columns
+        feature_names=desc_columns
     )
     plt.figure(figsize=(15, 10))
     shap.plots.waterfall(explanation, show=False)
@@ -355,6 +471,37 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
 
     shutil.copy(os.path.join(FILE_PATH, '../cache/manual_wv/samples/sample1.png'), os.path.join(FILE_PATH, '../cache/manual_wv/result/known.png'))
     shutil.copy(os.path.join(FILE_PATH, '../cache/manual_wv/samples/test.png'), os.path.join(FILE_PATH, '../cache/manual_wv/result/test.png'))
+
+    json_data = {
+        "prediction": y_pred.tolist(),
+        "score": np.mean(test_reconstructed).item(),
+        "threshold": threshold,
+        "test_reconstructed": test_reconstructed.tolist(),
+        "normal_reconstructed": normal_reconstructed.tolist(),
+        "columns": list(desc_columns),
+        "pos_sum": pos_sum.tolist(),
+    }
+
+    try:
+        explanation = client.models.generate_content(
+            model="gemini-2.5-pro",
+            contents=prompt.format(json=json.dumps(json_data, indent=2)),
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(thinking_budget=1024),
+                system_instruction=system_instruction,
+            ),
+        )
+        json_data["description"] = explanation.text
+        json_data["used_tokens"] = explanation.usage_metadata.thoughts_token_count + explanation.usage_metadata.candidates_token_count
+    except Exception as e:
+        print("Failed to generate content: %s", e)
+        json_data["description"] = "Failed to generate explanation due to an error."
+        json_data["used_tokens"] = 0
+
+    output_json_path = os.path.join(FILE_PATH, "../cache/manual_wv/result/result.json")
+
+    with open(output_json_path, "w") as f:
+        json.dump(json_data, f, indent=2)
 
 def perform_manual_writer_verification(img_path: str = "cache/manual_wv/samples/test.png") -> bool:
     preprocess(f"{FILE_PATH}/../{img_path}", sample="test")
@@ -373,8 +520,6 @@ def perform_manual_writer_verification(img_path: str = "cache/manual_wv/samples/
     with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), 'r') as f:
         threshold = float(f.read().strip())
     y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
-    os.makedirs(f"{FILE_PATH}/../cache/manual_wv/result", exist_ok=True)
-    with open(os.path.join(FILE_PATH, "../cache/manual_wv/result/result.txt"), 'w') as f:
-        f.write(str(y_pred))
-    process_explanations(test_features, model, scaler, threshold)
+    os.makedirs(os.path.join(FILE_PATH, "../cache/manual_wv/result"), exist_ok=True)
+    process_explanations(test_features, model, scaler, threshold, y_pred)
     return "Same Writer" if y_pred == 0 else "Different Writer";
