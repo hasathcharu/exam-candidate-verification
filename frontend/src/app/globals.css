@@ -1,7 +1,8 @@
 @import 'tailwindcss';
+@plugin "@tailwindcss/typography";
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 @plugin "daisyui";
 
 @plugin "daisyui/theme" {
@@ -112,7 +113,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
+/* .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -144,7 +145,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-}
+} */
 
 @layer base {
   * {
@@ -189,15 +190,15 @@ body {
 
 .wave-wrapper {
   position: relative;
-  height: 100px;
-  width: 100px;
+  height: 150px;
+  width: 150px;
   overflow: hidden;
   border-radius: 50%;
   background-color: #eff1f6;
   background: rgba(255, 255, 255, 0.36);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
@@ -239,8 +240,8 @@ body {
   position: absolute;
   top: 60%;
   left: -50%;
-  width: 200px;
-  height: 200px;
+  width: 300px;
+  height: 300px;
   background-color: #2c4f86;
   border-radius: 35%;
   animation-name: waves;
@@ -282,4 +283,11 @@ body {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.image-viewer-portrait {
+    @apply relative h-[70vh] w-[80vw] xl:w-[30vw] lg:w-[40vw] mx-auto;
+}
+.image-viewer-landscape {
+    @apply relative h-[30vh] w-[90vw] sm:h-[70vh] md:w-[60vw] mx-auto;
 }

@@ -4,25 +4,29 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Markdown from '@/components/ui/markdown';
+import ImageViewer from '@/components/ui/image-viewer';
 
 export default function App() {
   const router = useRouter();
   const [differentWriter, setDifferentWriter] = useState(false);
+  const [description, setDescription] = useState('');
   const [resetButtonLoading, setResetButtonLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          process.env.NEXT_PUBLIC_API + 'results/result.txt',
+          process.env.NEXT_PUBLIC_API + 'results/result.json',
           {
             method: 'GET',
           }
         );
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        const text = await res.text();
-        const line = text.split(/\r?\n/).find((l) => l.trim().length > 0) ?? '';
-        if (line === '1') {
+        const result = await res.json();
+        setDescription(result.description || 'No description available.');
+        if (result.prediction === 1) {
           setDifferentWriter(true);
         }
         setLoaded(true);
@@ -88,27 +92,39 @@ export default function App() {
                     actions based on the below report.
                   </p>
                 )}
-                <h2 className='py-6 text-lg font-bold'>Samples</h2>
-                <div className='flex gap-10 mb-10'>
-                  <div>
+                <h2 className='py-6 text-lg mx-auto font-bold max-w-3xl'>
+                  Explanation
+                </h2>
+                <div className='py-6 mx-auto'>
+                  <Markdown text={description} />
+                </div>
+                <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
+                  Samples
+                </h2>
+                <div className='flex gap-10 mb-10 max-w-3xl mx-auto'>
+                  <div className='flex-1'>
                     <h3 className='text-center mb-2 font-bold'>Known Sample</h3>
-                    <img
-                      src={process.env.NEXT_PUBLIC_API + 'results/known.png'}
-                      alt='Known Sample'
-                      className='h-full rounded-lg shadow-md mr-2'
-                    />
+                    <div className='relative w-full h-full'>
+                      <ImageViewer
+                        src={process.env.NEXT_PUBLIC_API + 'results/known.png'}
+                        alt='Known Sample'
+                        className='h-full rounded-lg shadow-md'
+                      />
+                    </div>
                   </div>
-                  <div>
+                  <div className='flex-1'>
                     <h3 className='text-center mb-2 font-bold'>Test Sample</h3>
-                    <img
-                      src={process.env.NEXT_PUBLIC_API + 'results/test.png'}
-                      alt='Test Sample'
-                      className='h-full rounded-lg shadow-md ml-2'
-                    />
+                    <div className='relative'>
+                      <ImageViewer
+                        src={process.env.NEXT_PUBLIC_API + 'results/test.png'}
+                        alt='Test Sample'
+                        className='h-full rounded-lg shadow-md'
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <h2 className='py-6 text-lg font-bold'>
+                <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
                   Reconstruction Errors
                 </h2>
                 <img
@@ -117,21 +133,23 @@ export default function App() {
                     'results/reconstructed_error.png'
                   }
                   alt='Reconstruction Error'
-                  className='w-full h-auto rounded-lg shadow-md'
+                  className='w-full h-auto rounded-lg shadow-md max-w-3xl mx-auto'
                 />
-                <h2 className='py-6 text-lg font-bold'>SHAP Waterfall Plot</h2>
+                <h2 className='py-6 text-lg font-bold  max-w-3xl mx-auto'>
+                  SHAP Waterfall Plot
+                </h2>
                 <img
                   src={process.env.NEXT_PUBLIC_API + 'results/waterfall.png'}
                   alt='SHAP Waterfall Plot'
-                  className='w-full h-auto rounded-lg shadow-md'
+                  className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
                 />
-                <h2 className='py-6 text-lg font-bold'>
+                <h2 className='py-6 text-lg font-bold  max-w-3xl mx-auto'>
                   Feature Level Heatmap
                 </h2>
                 <img
                   src={process.env.NEXT_PUBLIC_API + 'results/heatmap.png'}
                   alt='Reconstruction Error'
-                  className='w-full h-auto rounded-lg shadow-md'
+                  className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
                 />
                 <br />
                 <br />

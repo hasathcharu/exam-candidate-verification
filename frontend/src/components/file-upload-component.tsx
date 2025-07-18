@@ -29,7 +29,7 @@ export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { li
   return (
     <FileUpload
       maxFiles={limit}
-      maxSize={25 * 1024 * 1024}
+      maxSize={100 * 1024 * 1024}
       className='w-full'
       value={value}
       onValueChange={onValueChange}
@@ -45,7 +45,7 @@ export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { li
           <p className='font-medium text-sm'>Drop your sample{limit > 1? 's':''} here!</p>
           <p className='text-muted-foreground text-xs'>
             Or click to browse (max {limit} {limit > 1 ? 'files' : 'file'}, up
-            to 25MB{limit > 1 ? ' each' : ''})
+            to 100MB{limit > 1 ? ' each' : ''})
           </p>
         </div>
         <FileUploadTrigger asChild>
