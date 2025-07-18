@@ -15,6 +15,8 @@ clip_transform = transforms.Compose([
 
 def preprocess(image_path):
     input_img = preprocess_phase_1(image_path)
+    # input_img = cv2.imread(image_path)
+    # input_img = cv2.resize(input_img, FIXED_SIZE)
 
     rgb_img = cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB)
 
