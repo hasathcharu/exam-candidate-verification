@@ -5,7 +5,6 @@ import torch
 import gdown
 import os
 import clip
-import torchvision
 from ..helpers.ofsfd.utils.constants import DEVICE, MODEL_PATH, MODEL_PATH_ID
 import matplotlib.pyplot as plt
 from ..helpers.ofsfd.preprocess.preprocess import preprocess
