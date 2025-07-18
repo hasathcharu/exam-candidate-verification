@@ -19,6 +19,7 @@ def create_rule_mask(input):
     _, binary = cv2.threshold(cv2.cvtColor(input, cv2.COLOR_BGR2GRAY), 0, 255, cv2.THRESH_OTSU)
     binary = cv2.bitwise_not(binary)
     binary_dialted = cv2.dilate(binary, np.ones((4,4), np.uint8), iterations=1)
+
     line_kernel = np.ones((2, 50), np.uint8)
     horizontal_lines = cv2.morphologyEx(binary_dialted, cv2.MORPH_OPEN, line_kernel, iterations=2)
     horizontal_lines = cv2.dilate(horizontal_lines, np.ones((3,3), np.uint8), iterations=4)
@@ -29,6 +30,7 @@ def create_rule_mask(input):
 
 def remove_rules(input_path, size=SIZE):
     input = cv2.imread(input_path)
+    input = cv2.resize(input, (size, size))
 
     image = input.copy()
     image = cv2.GaussianBlur(image, (5, 5), 0)
