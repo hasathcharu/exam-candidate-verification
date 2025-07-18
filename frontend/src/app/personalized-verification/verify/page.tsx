@@ -42,7 +42,7 @@ export default function App() {
       if (res.status !== 200) {
         throw new Error(payload.message || 'Training failed');
       }
-      router.push('/advanced-verification/result');
+      router.push('/personalized-verification/result');
       setOpen(false);
     } catch (err: any) {
       setOpen(false);
@@ -58,7 +58,7 @@ export default function App() {
         method: 'GET',
       });
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      router.push('/advanced-verification');
+      router.push('/personalized-verification');
       setResetButtonLoading(false);
     } catch (err: any) {
       toast.error('Resetting model failed. Something went wrong.');
@@ -74,7 +74,7 @@ export default function App() {
           <div className='hero-content'>
             <div className='max-w-xl'>
               <h1 className='text-3xl font-bold text-center'>
-                Advanced Writer Verification
+                Personalized Writer Verification
               </h1>
               <p className='py-6 text-md'>
                 Your model has been trained with the known samples you provided.

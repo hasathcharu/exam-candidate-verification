@@ -5,7 +5,18 @@ from sklearn.metrics import auc, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
-from ..helpers.manual_wv.feature_extraction.features import compute_chaincode_histogram, compute_hog, compute_slant_angle_histogram, compute_stroke_width_histogram, contour_hinge_pdf, get_exterior_curves, get_global_word_features, get_interior_contours, get_num_of_black_pixels, get_zone_features
+from ..helpers.manual_wv.feature_extraction.features import (
+    compute_chaincode_histogram,
+    compute_hog,
+    compute_slant_angle_histogram,
+    compute_stroke_width_histogram,
+    contour_hinge_pdf,
+    get_exterior_curves,
+    get_global_word_features,
+    get_interior_contours,
+    get_num_of_black_pixels,
+    get_zone_features,
+)
 from ..helpers.manual_wv.preprocess.preprocess import read_image, remove_rules
 from ..helpers.manual_wv.preprocess.segmentation import segment_lines, clean_lines
 from ..helpers.manual_wv.utils import constants as c
@@ -23,12 +34,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib
 import shutil
-from google import genai
-from google.genai import types
+from openai import OpenAI
 
-client = genai.Client()
+client = OpenAI()
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 
 FILE_PATH = os.path.dirname(__file__)
 
@@ -38,8 +48,12 @@ from PIL import Image
 from ultralytics import YOLO
 
 char_model = YOLO(os.path.join(FILE_PATH, "../weights/yolo.pt"))
-contour_hinge_pca = joblib.load(os.path.join(FILE_PATH, "../weights/contour_hinge_hist_pca.pkl"))
-contour_hinge_hist_scaler = joblib.load(os.path.join(FILE_PATH, "../weights/contour_hinge_hist_scaler.pkl"))
+contour_hinge_pca = joblib.load(
+    os.path.join(FILE_PATH, "../weights/contour_hinge_hist_pca.pkl")
+)
+contour_hinge_hist_scaler = joblib.load(
+    os.path.join(FILE_PATH, "../weights/contour_hinge_hist_scaler.pkl")
+)
 
 CHAR_CONF_THRESHOLD = 0.5
 RESIZE_DIM = (40, 40)
@@ -110,27 +124,30 @@ desc_columns = [
     "Letter 'e' Shape Descriptor 6",
     "Letter 'e' Shape Descriptor 7",
     "Letter 'e' Shape Descriptor 8",
-    "Letter 'e' Shape Descriptor 9"
-  ]
+    "Letter 'e' Shape Descriptor 9",
+]
 
 prompt = """
 You are a well paid, well esteemed, handwriting-forensics analyst. 
 I will give you:  
-• A list of feature names (columns).  
-• Two arrays of reconstruction errors:    
+- A list of feature names (columns). 
+- Two arrays of features:
+            - normal_features (features representative of known samples)     
+            - test_features (the features for the sample under test)
+- Two arrays of reconstruction errors:    
          - normal_reconstructed (the average error for known samples)     
          - test_reconstructed (the error for the sample under test)   
-• An array of SHAP positive contributions (pos_sum) indicating each feature's push toward the model's prediction.   
-• A decision threshold for anomaly detection.   
-• A binary prediction (1 = different writer, 0 = same writer).  
+- An array of SHAP positive contributions (pos_sum) indicating each feature's push toward the model's prediction.   
+- A decision threshold for anomaly detection.   
+- A binary prediction (1 = different writer, 0 = same writer).  
 
 Your task (in under 400 words, with clear paragraph breaks, without numbered headings):  
 
 1. Identify the top 5 features with the highest SHAP positive values.   
 2. For each of those features, state in tabular form:      
-      a. The test sample's reconstruction error vs. the normal average.          
-      c. A plain-English explanation of what a human should look for in actual handwriting (e.g., “number of exterior curves: normally, the writer tends to join letters, while this sample shows more disjoint strokes”).  
-3. Summarize why the model classified this as an imposter (or genuine) based on both SHAP and reconstruction errors.
+      a. The normal feature values vs. the test sample's feature values.         
+      c. A plain-English explanation of what a human should look for in actual handwriting (e.g., “number of exterior curves: normally, the writer tends to join letters, while this sample shows more disjoint strokes”). You can use the normal_features array to understand what is normal for the known writer, and the test_features array to understand what is abnormal for the sample under test. 
+3. Summarize why the model classified this as an imposter (or genuine) based on both SHAP and reconstruction errors. Look out for relationships between features (ie, even if a certain feature is not abnormal, it may be the combination of features that leads to the classification).
 
 Explain it like you are explaining to a secondary schooler, and maintain a warm and professional tone, so that anyone can understand. 
 
@@ -139,7 +156,7 @@ Here is the data in JSON format:
 {json}
 """
 
-system_instruction = "You are a well paid, well esteemed, handwriting-forensics analyst. You will be given a JSON object with the data and you will have to explain it in under 400 words, with clear paragraph breaks, without numbered headings. Do not greet the user, just explain the data, and use a warm and professional tone, so that anyone can understand, in third person."
+system_instructions = "You are a well paid, well esteemed, handwriting-forensics analyst. You will be given a JSON object with the data and you will have to explain it in under 400 words, with clear paragraph breaks, without numbered headings. Use a warm and professional tone, so that anyone can understand. When referring to the predictions, use 'different writer' or 'known writer'. The model that predicted the results is a personalized global autoencoder trained on handwriting features, for the specific writer. The normal_features are just reference samples of the target writer. The features are derived from the segmentation of handwritten lines and the character 'e'. The model uses reconstruction errors and SHAP values to determine the likelihood of the sample being from a different writer."
 
 local_feature_headers = [
     "sample",
@@ -166,10 +183,13 @@ global_feature_headers = [
     "viz_lower",
 ]
 
+
 def preprocess(img_path: str, sample: str = "test") -> None:
     image = read_image(img_path)
     if image is None:
-        raise InternalServerError("We couldn't load the test image. Please try again from the beginning.")
+        raise InternalServerError(
+            "We couldn't load the test image. Please try again from the beginning."
+        )
     raw_image, binary_image = remove_rules(image)
     (lines, dirty_lines), cropped_rectangles = segment_lines(binary_image)
     dirty_raw_lines = [
@@ -186,7 +206,9 @@ def preprocess(img_path: str, sample: str = "test") -> None:
         os.makedirs(f"{segment_folder}/{sample}/dirty_binary_lines", exist_ok=True)
         os.makedirs(f"{segment_folder}/{sample}/dirty_raw_lines", exist_ok=True)
 
-        cv2.imwrite(os.path.join(f"{segment_folder}/{sample}", "binary.png"), binary_image)
+        cv2.imwrite(
+            os.path.join(f"{segment_folder}/{sample}", "binary.png"), binary_image
+        )
         cv2.imwrite(os.path.join(f"{segment_folder}/{sample}", "raw.png"), raw_image)
 
         for i, line in enumerate(lines):
@@ -209,7 +231,10 @@ def preprocess(img_path: str, sample: str = "test") -> None:
             resized = char.resize(RESIZE_DIM, Image.LANCZOS)
             crop_filename = f"{sample}_{i}_{j}.png"
             os.makedirs(f"{segment_folder}/{sample}/chars/{i}", exist_ok=True)
-            resized.save(os.path.join(f"{segment_folder}/{sample}/chars/{i}", crop_filename))
+            resized.save(
+                os.path.join(f"{segment_folder}/{sample}/chars/{i}", crop_filename)
+            )
+
 
 def extract_char_features(sample: str = "test") -> None:
     os.makedirs(char_features, exist_ok=True)
@@ -217,21 +242,24 @@ def extract_char_features(sample: str = "test") -> None:
     char_images = []
     chars_data = pd.DataFrame(columns=local_feature_headers)
     for line in os.listdir(f"{segment_folder}/{sample}/chars"):
-            if os.path.isdir(f"{segment_folder}/{sample}/chars/{line}"):
-                char_images.extend(
-                    [
-                        os.path.join(f"{segment_folder}/{sample}/chars/{line}", img)
-                        for img in os.listdir(f"{segment_folder}/{sample}/chars/{line}")
-                        if img.endswith(".png")
-                    ]
-                )
+        if os.path.isdir(f"{segment_folder}/{sample}/chars/{line}"):
+            char_images.extend(
+                [
+                    os.path.join(f"{segment_folder}/{sample}/chars/{line}", img)
+                    for img in os.listdir(f"{segment_folder}/{sample}/chars/{line}")
+                    if img.endswith(".png")
+                ]
+            )
     for char_image in char_images:
         char = cv2.imread(char_image, cv2.IMREAD_GRAYSCALE)
         sample_name = os.path.basename(char_image).split(".")[0]
         hog_hist = compute_hog(char)
-        char_data = pd.DataFrame([[sample_name, *hog_hist]], columns=local_feature_headers)
+        char_data = pd.DataFrame(
+            [[sample_name, *hog_hist]], columns=local_feature_headers
+        )
         chars_data = pd.concat([chars_data, char_data], ignore_index=True)
     chars_data.to_parquet(f"{char_features}/{sample}.parquet", index=False)
+
 
 def extract_line_features(sample: str = "test") -> None:
     os.makedirs(line_features, exist_ok=True)
@@ -241,7 +269,12 @@ def extract_line_features(sample: str = "test") -> None:
 
     for line in os.listdir(f"{segment_folder}/{sample}/binary_lines"):
         if line.endswith(".png"):
-            line_images.append((os.path.join(f"{segment_folder}/{sample}/raw_lines", line), os.path.join(f"{segment_folder}/{sample}/dirty_binary_lines", line)))
+            line_images.append(
+                (
+                    os.path.join(f"{segment_folder}/{sample}/raw_lines", line),
+                    os.path.join(f"{segment_folder}/{sample}/dirty_binary_lines", line),
+                )
+            )
     for raw_line_image, dirty_binary_line_image in line_images:
         sample_name = f"{sample}_{os.path.basename(raw_line_image).split('.')[0]}"
         raw_line = cv2.imread(raw_line_image, cv2.IMREAD_GRAYSCALE)
@@ -253,41 +286,51 @@ def extract_line_features(sample: str = "test") -> None:
         grey_entropy = shannon_entropy(raw_line)
         num_black_pixels = get_num_of_black_pixels(binary_line)
         binary_line_inv = cv2.bitwise_not(binary_line)
-        interior_contours, num_interior_contours, mean_interior_area, _ = get_interior_contours(binary_line_inv)
+        interior_contours, num_interior_contours, mean_interior_area, _ = (
+            get_interior_contours(binary_line_inv)
+        )
         exterior_curves, num_exterior_curves = get_exterior_curves(binary_line_inv)
         chaincode_histogram, chaincode_images, color_chaincode_image = (
             compute_chaincode_histogram(binary_line_inv)
         )
-        stroke_width_hist, stroke_widths = compute_stroke_width_histogram(binary_line_inv)
+        stroke_width_hist, stroke_widths = compute_stroke_width_histogram(
+            binary_line_inv
+        )
         gap_line, gaps, num_words = get_global_word_features(binary_line)
         viz_upper, viz_middle, viz_lower = get_zone_features(binary_line)
         contour_hinge_hist = contour_hinge_pdf(binary_line_inv)
         contour_hinge_hist = contour_hinge_hist_scaler.transform([contour_hinge_hist])
         contour_hinge_hist = contour_hinge_pca.transform(contour_hinge_hist)
         contour_hinge_pca_data = contour_hinge_hist.flatten()
-        
+
         slant_angle_hist = compute_slant_angle_histogram(binary_line_inv)
-        line_data = pd.DataFrame([[
-            sample_name,
-            num_black_pixels,
-            grey_level_threshold,
-            grey_entropy,
-            num_interior_contours,
-            mean_interior_area,
-            num_exterior_curves,
-            *stroke_width_hist,
-            np.mean(gaps) if len(gaps) > 0 else 0,
-            np.std(gaps) if len(gaps) > 0 else 0,
-            num_words,
-            *chaincode_histogram,
-            *contour_hinge_pca_data,
-            *slant_angle_hist,
-            viz_upper,
-            viz_middle,
-            viz_lower,
-        ]], columns=global_feature_headers)
+        line_data = pd.DataFrame(
+            [
+                [
+                    sample_name,
+                    num_black_pixels,
+                    grey_level_threshold,
+                    grey_entropy,
+                    num_interior_contours,
+                    mean_interior_area,
+                    num_exterior_curves,
+                    *stroke_width_hist,
+                    np.mean(gaps) if len(gaps) > 0 else 0,
+                    np.std(gaps) if len(gaps) > 0 else 0,
+                    num_words,
+                    *chaincode_histogram,
+                    *contour_hinge_pca_data,
+                    *slant_angle_hist,
+                    viz_upper,
+                    viz_middle,
+                    viz_lower,
+                ]
+            ],
+            columns=global_feature_headers,
+        )
         lines_data = pd.concat([lines_data, line_data], ignore_index=True)
     lines_data.to_parquet(f"{line_features}/{sample}.parquet", index=False)
+
 
 def prepare_all_features(sample: str = "test") -> None:
     os.makedirs(all_features, exist_ok=True)
@@ -296,7 +339,8 @@ def prepare_all_features(sample: str = "test") -> None:
     char_df = pd.read_parquet(f"{char_features}/{sample}.parquet")
 
     char_out_df = pd.DataFrame(
-        np.zeros((line_df.shape[0], len(char_df.columns[1:]))), columns=char_df.columns[1:]
+        np.zeros((line_df.shape[0], len(char_df.columns[1:]))),
+        columns=char_df.columns[1:],
     )
 
     for i, row in line_df.iterrows():
@@ -308,12 +352,15 @@ def prepare_all_features(sample: str = "test") -> None:
         else:
             sample_id = "_".join(sample_id.split("_")[:-1])
             char_rows = char_df[char_df["sample"].str.startswith(sample_id)]
-            char_data = char_rows.drop(columns=["sample"]).sample(n=min(4, len(char_rows)))
+            char_data = char_rows.drop(columns=["sample"]).sample(
+                n=min(4, len(char_rows))
+            )
             char_out_df.iloc[i] = char_data.mean(axis=0)
     char_out_df = char_out_df.fillna(0)
     char_out_df = char_out_df.add_prefix("e_")
     line_df = pd.concat([line_df, char_out_df], axis=1)
     line_df.to_parquet(f"{all_features}/{sample}.parquet", index=False)
+
 
 def compute_eer(y_true, y_scores):
     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
@@ -323,6 +370,7 @@ def compute_eer(y_true, y_scores):
     auc_roc = auc(fpr, tpr)
     eer_threshold = thresholds[eer_threshold_idx]
     return eer, auc_roc, eer_threshold
+
 
 def train_model() -> None:
     for file in os.listdir(f"{FILE_PATH}/../cache/manual_wv/samples"):
@@ -346,11 +394,10 @@ def train_model() -> None:
     train = scaler.fit_transform(train)
     joblib.dump(scaler, os.path.join(FILE_PATH, "../cache/manual_wv/scaler.pkl"))
     val = scaler.transform(val)
-    
-    
+
     model = build_global_autoencoder(all_features_df.shape[1])
     model.load_weights(os.path.join(FILE_PATH, "../weights/pretrained.weights.h5"))
-    
+
     es = EarlyStopping(monitor="val_loss", patience=15, restore_best_weights=True)
 
     model.fit(
@@ -363,9 +410,9 @@ def train_model() -> None:
         validation_data=(val, val),
         callbacks=[es],
     )
-    
+
     model.save_weights(os.path.join(FILE_PATH, "../cache/manual_wv/writer.weights.h5"))
-    
+
     y_scores = np.mean(np.square(val - model.predict(val)), axis=1)
     val_other = pd.read_parquet(os.path.join(FILE_PATH, "../weights/val_data.parquet"))
     val_other = val_other.sample(n=len(val), random_state=42)
@@ -374,32 +421,41 @@ def train_model() -> None:
     val_all = np.vstack([val, val_other])
     val_reconstructed = model.predict(val_all, verbose=0)
     y_scores = np.mean(np.square(val_all - val_reconstructed), axis=1)
-    labels = np.concatenate([
-        np.zeros(len(val), dtype=int),
-        np.ones(len(val_other), dtype=int)
-    ])
+    labels = np.concatenate(
+        [np.zeros(len(val), dtype=int), np.ones(len(val_other), dtype=int)]
+    )
     _, _, threshold = compute_eer(labels, y_scores)
-    
-    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), 'w') as f:
+
+    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), "w") as f:
         f.write(str(threshold))
+
 
 def predict_feature(x, idx, model):
     recon = model.predict(x, verbose=0)
     return np.square(x[:, idx] - recon[:, idx])
 
+
 def build_feature_error_model(autoencoder, idx: int):
-    x_in   = autoencoder.input
-    x_hat  = autoencoder.output
-    in_i = tf.keras.layers.Lambda(lambda x: x[:, idx:idx+1], output_shape=(1,))(x_in)
-    hat_i = tf.keras.layers.Lambda(lambda x: x[:, idx:idx+1], output_shape=(1,))(x_hat)
+    x_in = autoencoder.input
+    x_hat = autoencoder.output
+    in_i = tf.keras.layers.Lambda(lambda x: x[:, idx : idx + 1], output_shape=(1,))(
+        x_in
+    )
+    hat_i = tf.keras.layers.Lambda(lambda x: x[:, idx : idx + 1], output_shape=(1,))(
+        x_hat
+    )
     diff = tf.keras.layers.Subtract()([in_i, hat_i])
     sq_err = tf.keras.layers.Lambda(lambda x: tf.square(x), output_shape=(1,))(diff)
     return tf.keras.Model(inputs=x_in, outputs=sq_err)
 
+
 def predict(x, model):
     return np.square(x - model.predict(x, verbose=0))
 
-def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, scaler, threshold, y_pred) -> None:
+
+def process_explanations(
+    test_features_scaled:pd.DataFrame, test_features: pd.DataFrame, model: tf.keras.Model, scaler, threshold, y_pred
+) -> None:
     normal_features = pd.DataFrame()
     for file in os.listdir(all_features):
         if file.endswith(".parquet") and file.startswith("sample"):
@@ -407,10 +463,10 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
             normal_features = pd.concat([normal_features, df], ignore_index=True)
     normal_features = normal_features.drop(columns=["sample"])
     columns = normal_features.columns
-    normal_features = scaler.transform(normal_features)
+    normal_features_scaled = scaler.transform(normal_features)
 
-    test_reconstructed = np.mean(predict(test_features, model), axis=0)
-    normal_reconstructed = np.mean(predict(normal_features, model), axis=0)
+    test_reconstructed = np.mean(predict(test_features_scaled, model), axis=0)
+    normal_reconstructed = np.mean(predict(normal_features_scaled, model), axis=0)
 
     plt.figure(figsize=(10, 7))
     plt.plot(test_reconstructed, label="Test Reconstructed Error")
@@ -418,24 +474,38 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
     plt.xlabel("Features")
     plt.ylabel("Reconstructed Error")
     plt.xticks(ticks=range(len(columns)), labels=desc_columns, rotation=90)
-    plt.title(f"Reconstructed Error for Normal and Test Samples\nTest Reconstructed Error: {np.mean(test_reconstructed):.2f}\nNormal Reconstructed Error: {np.mean(normal_reconstructed):.2f}\nPrediction: {'Different Writer' if np.mean(test_reconstructed) > threshold else 'Same Writer'}")
+    plt.title(
+        f"Reconstructed Error for Normal and Test Samples\nTest Reconstructed Error: {np.mean(test_reconstructed):.2f}\nNormal Reconstructed Error: {np.mean(normal_reconstructed):.2f}\nPrediction: {'Different Writer' if np.mean(test_reconstructed) > threshold else 'Same Writer'}"
+    )
     plt.tight_layout()
     plt.legend()
-    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/reconstructed_error.png"))
+    plt.savefig(
+        os.path.join(FILE_PATH, "../cache/manual_wv/result/reconstructed_error.png")
+    )
 
-    pos_shap_values = pd.DataFrame(columns=columns, index=columns, data=np.zeros((len(columns), len(columns))), dtype=float)
-    neg_shap_values = pd.DataFrame(columns=columns, index=columns, data=np.zeros((len(columns), len(columns))), dtype=float)
-    background_set = normal_features
+    pos_shap_values = pd.DataFrame(
+        columns=columns,
+        index=columns,
+        data=np.zeros((len(columns), len(columns))),
+        dtype=float,
+    )
+    neg_shap_values = pd.DataFrame(
+        columns=columns,
+        index=columns,
+        data=np.zeros((len(columns), len(columns))),
+        dtype=float,
+    )
+    background_set = normal_features_scaled
     for i in tqdm(range(len(columns)), desc="Computing SHAP values"):
-        fe_model  = build_feature_error_model(model, i)
+        fe_model = build_feature_error_model(model, i)
         explainer = shap.DeepExplainer(fe_model, background_set)
-        shap_val = explainer.shap_values(test_features)
+        shap_val = explainer.shap_values(test_features_scaled)
         shap_arr = np.squeeze(shap_val, axis=2)
         pos_shap = np.where(shap_arr > 0, shap_arr, 0)
         neg_shap = np.where(shap_arr < 0, shap_arr, 0)
         pos_shap_values.iloc[i] = pos_shap.mean(axis=0)
         neg_shap_values.iloc[i] = neg_shap.mean(axis=0)
-    
+
     pos_sum = pos_shap_values.sum(axis=1)
 
     plt.figure(figsize=(15, 10))
@@ -447,14 +517,14 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
         ticks=np.arange(len(columns)) + 0.5,
         labels=desc_columns,
         rotation=90,
-        ha='center'
+        ha="center",
     )
 
     plt.yticks(
         ticks=np.arange(len(columns)) + 0.5,
         labels=desc_columns,
         rotation=0,
-        va='center'
+        va="center",
     )
     plt.tight_layout()
     plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/heatmap.png"))
@@ -462,15 +532,25 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
     explanation = shap.Explanation(
         values=pos_sum,
         base_values=np.mean(predict(background_set, model)),
-        data=np.mean(test_features, axis=0),
-        feature_names=desc_columns
+        data=np.mean(test_features_scaled, axis=0),
+        feature_names=desc_columns,
     )
     plt.figure(figsize=(15, 10))
     shap.plots.waterfall(explanation, show=False)
-    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/waterfall.png"), bbox_inches='tight', pad_inches=0.2)
+    plt.savefig(
+        os.path.join(FILE_PATH, "../cache/manual_wv/result/waterfall.png"),
+        bbox_inches="tight",
+        pad_inches=0.2,
+    )
 
-    shutil.copy(os.path.join(FILE_PATH, '../cache/manual_wv/samples/sample1.png'), os.path.join(FILE_PATH, '../cache/manual_wv/result/known.png'))
-    shutil.copy(os.path.join(FILE_PATH, '../cache/manual_wv/samples/test.png'), os.path.join(FILE_PATH, '../cache/manual_wv/result/test.png'))
+    shutil.copy(
+        os.path.join(FILE_PATH, "../cache/manual_wv/samples/sample1.png"),
+        os.path.join(FILE_PATH, "../cache/manual_wv/result/known.png"),
+    )
+    shutil.copy(
+        os.path.join(FILE_PATH, "../cache/manual_wv/samples/test.png"),
+        os.path.join(FILE_PATH, "../cache/manual_wv/result/test.png"),
+    )
 
     json_data = {
         "prediction": y_pred.tolist(),
@@ -480,30 +560,31 @@ def process_explanations(test_features: pd.DataFrame, model: tf.keras.Model, sca
         "normal_reconstructed": normal_reconstructed.tolist(),
         "columns": list(desc_columns),
         "pos_sum": pos_sum.tolist(),
+        "normal_features": normal_features.mean(axis=0).tolist(),
+        "test_features": test_features.mean(axis=0).tolist(),
     }
 
     try:
-        explanation = client.models.generate_content(
-            model="gemini-2.5-pro",
-            contents=prompt.format(json=json.dumps(json_data, indent=2)),
-            config=types.GenerateContentConfig(
-                thinking_config=types.ThinkingConfig(thinking_budget=1024),
-                system_instruction=system_instruction,
-            ),
+        explanation = client.responses.create(
+            model="gpt-4.1", 
+            instructions=system_instructions,
+            input=prompt.format(json=json.dumps(json_data, indent=2)),
+            temperature=0,
         )
-        json_data["description"] = explanation.text
-        json_data["used_tokens"] = explanation.usage_metadata.thoughts_token_count + explanation.usage_metadata.candidates_token_count
+        json_data["description"] = explanation.output_text
     except Exception as e:
         print("Failed to generate content: %s", e)
-        json_data["description"] = "Failed to generate explanation due to an error."
-        json_data["used_tokens"] = 0
+        json_data["description"] = "Failed to generate the AI explanation due to an error."
 
     output_json_path = os.path.join(FILE_PATH, "../cache/manual_wv/result/result.json")
 
     with open(output_json_path, "w") as f:
         json.dump(json_data, f, indent=2)
 
-def perform_manual_writer_verification(img_path: str = "cache/manual_wv/samples/test.png") -> bool:
+
+def perform_manual_writer_verification(
+    img_path: str = "cache/manual_wv/samples/test.png",
+) -> bool:
     preprocess(f"{FILE_PATH}/../{img_path}", sample="test")
     extract_char_features("test")
     extract_line_features("test")
@@ -511,15 +592,15 @@ def perform_manual_writer_verification(img_path: str = "cache/manual_wv/samples/
     test_features = pd.read_parquet(f"{all_features}/test.parquet")
     test_features = test_features.drop(columns=["sample"])
     scaler = joblib.load(os.path.join(FILE_PATH, "../cache/manual_wv/scaler.pkl"))
-    test_features = scaler.transform(test_features)
-    model = build_global_autoencoder(test_features.shape[1])
+    test_features_scaled = scaler.transform(test_features)
+    model = build_global_autoencoder(test_features_scaled.shape[1])
     model.load_weights(os.path.join(FILE_PATH, "../cache/manual_wv/writer.weights.h5"))
-    predict = model.predict(test_features, verbose=0)
-    y_scores = np.mean(np.square(test_features - predict), axis=1)
+    predict = model.predict(test_features_scaled, verbose=0)
+    y_scores = np.mean(np.square(test_features_scaled - predict), axis=1)
     y_score = np.mean(y_scores)
-    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), 'r') as f:
+    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), "r") as f:
         threshold = float(f.read().strip())
     y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
     os.makedirs(os.path.join(FILE_PATH, "../cache/manual_wv/result"), exist_ok=True)
-    process_explanations(test_features, model, scaler, threshold, y_pred)
-    return "Same Writer" if y_pred == 0 else "Different Writer";
+    process_explanations(test_features_scaled, test_features, model, scaler, threshold, y_pred)
+    return "Same Writer" if y_pred == 0 else "Different Writer"

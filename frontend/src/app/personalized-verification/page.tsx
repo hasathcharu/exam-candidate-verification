@@ -8,8 +8,8 @@ export default async function Page() {
   })
   if (res.ok) {
     return redirect(
-        '/advanced-verification/verify'
+        '/personalized-verification/verify'
     )
   }
-  redirect('/advanced-verification/train')
+  redirect('/personalized-verification/train')
 }
