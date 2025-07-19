@@ -1,3 +1,5 @@
+import platform
+import hashlib
 import torch.nn as nn
 import torch
 import gdown
@@ -6,6 +8,10 @@ import clip
 from ..helpers.ofsfd.utils.constants import DEVICE, MODEL_PATH, MODEL_PATH_ID
 import matplotlib.pyplot as plt
 from ..helpers.ofsfd.preprocess.preprocess import preprocess
+
+torch.manual_seed(0)
+torch.use_deterministic_algorithms(True)
+torch.cuda.manual_seed_all(0)
 
 class SignatureVerifier(nn.Module):
     def __init__(self):
@@ -19,7 +25,6 @@ class SignatureVerifier(nn.Module):
         self.text_descriptions = [
             "a forged signature with irregular pressure, hesitant strokes, unnatural overlap, inconsistent transitions, uneven spacing, unusual curvature, irregular textures, unnatural connectivity.",
             "a genuine signature with consistent pressure, fluid strokes, natural overlap, smooth transitions, balanced spacing, characteristic curvature, structured textures, natural connectivity."
-
         ]
         self._init_text_features()
 
@@ -46,17 +51,19 @@ def predict_signature_type(image_path, model_path = MODEL_PATH):
         print(f"Model file not found at {model_path}. Downloading...")
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         gdown.download(f"https://drive.google.com/uc?id={MODEL_PATH_ID}", model_path, quiet=False)
-        
+
     model = SignatureVerifier().to(DEVICE)
     model.load_state_dict(torch.load(model_path, map_location=DEVICE))
     model.eval()
 
     orig_img, tensor_image = preprocess(image_path)
 
-    with torch.no_grad(), torch.autocast(device_type=DEVICE):
+    with torch.no_grad():
         output = model(tensor_image)
+        print("Raw outputs (logits):", output.tolist())
         probs = torch.softmax(output, dim=1)
         pred = torch.argmax(probs, dim=1).item()
+
 
     label = "Genuine" if pred == 1 else "Forged"
     confidence = probs[0][pred].item()

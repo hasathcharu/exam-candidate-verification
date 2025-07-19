@@ -53,20 +53,63 @@ Content-Type: image/png
 < ./automatic_wv/sample2.png
 ------WebKitFormBoundary7MA4YWxkTrZu0g--
 
-###
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
-Content-Type: application/json
-X-goog-api-key: {{$dotenv GEMINI_API}}
+### Pairwise Automatic Writer Verification
+POST http://localhost:8000/api/v1/predict/pairwise-writer-verification
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0g
 
-{
-  "contents": [
-    {
-      "parts": [
-        {
-          "text": "Can you explain the difference between CNN and RNN in deep learning?"
-        }
-      ]
-    }
-  ]
-}
+------WebKitFormBoundary7MA4YWxkTrZu0g
+Content-Disposition: form-data; name="file1_normal"; filename="file1_normal.png"
+Content-Type: image/png
+
+< ./automatic_wv/file1_normal.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file1_fast"; filename="file1_fast.png"
+Content-Type: image/png
+
+< ./automatic_wv/file1_fast.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file2_normal"; filename="file2_normal.png"
+Content-Type: image/png
+
+< ./automatic_wv/file2_normal.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file2_fast"; filename="file2_fast.png"
+Content-Type: image/png
+
+< ./automatic_wv/file2_fast.png
+------WebKitFormBoundary7MA4YWxkTrZu0g--
+
+### Pairwise Automatic Writer Verification
+POST http://localhost:8000/api/v1/predict/pairwise-writer-verification
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0g
+
+------WebKitFormBoundary7MA4YWxkTrZu0g
+Content-Disposition: form-data; name="file1_normal"; filename="file1_normal.png"
+Content-Type: image/png
+
+< ./automatic_wv/file1_normal.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file1_fast"; filename="file1_fast.png"
+Content-Type: image/png
+
+< ./automatic_wv/file1_fast.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file2_normal"; filename="file2_normal.png"
+Content-Type: image/png
+
+< ./automatic_wv/file2_normal.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file2_fast"; filename="file2_fast.png"
+Content-Type: image/png
+
+< ./automatic_wv/file2_fast.png
+------WebKitFormBoundary7MA4YWxkTrZu0g--
+
+
 
