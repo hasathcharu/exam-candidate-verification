@@ -6,23 +6,23 @@
 @plugin "daisyui";
 
 @plugin "daisyui/theme" {
-  name: 'writer-verification';
+  name: 'haritha';
   default: true;
   prefersdark: false;
   color-scheme: 'light';
   --color-base-100: oklch(98% 0.001 106.423);
   --color-base-200: oklch(97% 0.001 106.424);
   --color-base-300: oklch(92% 0.003 48.717);
-  --color-base-content: oklch(21% 0.006 56.043);
-  --color-primary: oklch(62% 0.214 259.815);
+  --color-base-content: oklch(15.43% 0.013 122.23);
+  --color-primary: oklch(70.53% 0.156 125);
   --color-primary-content: oklch(97% 0.014 254.604);
-  --color-secondary: oklch(71% 0.143 215.221);
+  --color-secondary: oklch(81.74% 0.077 171.43);
   --color-secondary-content: oklch(98% 0.019 200.873);
-  --color-accent: oklch(76% 0.233 130.85);
+  --color-accent: oklch(74.36% 0.092 214.6);
   --color-accent-content: oklch(98% 0.031 120.757);
   --color-neutral: oklch(44% 0.011 73.639);
   --color-neutral-content: oklch(98% 0.001 106.423);
-  --color-info: oklch(68% 0.169 237.323);
+  --color-info: oklch(55% 0.046 257.417);
   --color-info-content: oklch(97% 0.013 236.62);
   --color-success: oklch(69% 0.17 162.48);
   --color-success-content: oklch(97% 0.021 166.113);
@@ -37,7 +37,7 @@
   --size-field: 0.25rem;
   --border: 1.5px;
   --depth: 0;
-  --noise: 1;
+  --noise: 0;
 }
 
 @theme inline {
@@ -157,6 +157,10 @@
 }
 
 @layer utilities {
+  .toaster {
+    @apply bg-background/20 backdrop-filter backdrop-blur-xs border-gray-200 border rounded-[20px] p-2 shadow-md;
+  }
+
   /* keyframes */
   @keyframes blob {
     0% {
@@ -182,9 +186,6 @@
 }
 
 body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
 }
 
@@ -199,8 +200,7 @@ body {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   border: 4px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.1),
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     inset 0 -1px 0 rgba(255, 255, 255, 0.1),
     inset 0 0 60px 30px rgba(255, 255, 255, 3);
@@ -250,23 +250,23 @@ body {
   /* filter: blur(10px); */
   &.one {
     animation-duration: 10000ms;
-    background-color: #55e0c4;
+    background-color: #8da362;
     opacity: 0.4;
   }
 
   &.two {
-    background-color: #70c7cb;
+    background-color: #afd0c5;
     animation-duration: 6000ms;
   }
 
   &.three {
-    background-color: #407b7e;
+    background-color: #8bb2bb;
     animation-duration: 11000ms;
   }
 
   &.four {
-    background-color: #70c7cb;
-    animation-duration: 7000ms;
+    background-color: #b0f8e0;
+    animation-duration: 14000ms;
     /* animation-delay: 2000ms; */
     opacity: 0.6;
   }
@@ -286,8 +286,8 @@ body {
 }
 
 .image-viewer-portrait {
-    @apply relative h-[70vh] w-[80vw] xl:w-[30vw] lg:w-[40vw] mx-auto;
+  @apply relative h-[70vh] w-[80vw] xl:w-[30vw] lg:w-[40vw] mx-auto;
 }
 .image-viewer-landscape {
-    @apply relative h-[30vh] w-[90vw] sm:h-[70vh] md:max-h-[70vh] md:max-w-[60vw] mx-auto;
+  @apply relative h-[30vh] w-[90vw] sm:h-[70vh] md:max-h-[70vh] md:max-w-[60vw] mx-auto;
 }
