@@ -1,3 +1,4 @@
+import math
 from flask import json, jsonify
 import numpy as np
 import shap
@@ -137,9 +138,12 @@ I will give you:
 - Two arrays of reconstruction errors:    
          - normal_reconstructed (the average error for known samples)     
          - test_reconstructed (the error for the sample under test)   
-- An array of SHAP positive contributions (pos_sum) indicating each feature's push toward the model's prediction.   
-- A decision threshold for anomaly detection.   
-- A binary prediction (1 = different writer, 0 = same writer).  
+- An array of SHAP positive contributions (pos_sum) indicating each feature's push toward the model's high reconstruction error.
+- An array of SHAP negative contributions (neg_sum) indicating each feature's push toward the model's low reconstruction error.   
+- A binary prediction (same_writer) (1 = same writer, 0 = different writer).  
+- A decision threshold (threshold) for anomaly detection.
+- The score (score) for the sample under test, which is the average reconstruction error.
+- A confidence score (confidence) indicating the model's certainty in its prediction.
 
 Your task (in under 400 words, with clear paragraph breaks, without numbered headings):  
 
@@ -372,6 +376,17 @@ def compute_eer(y_true, y_scores):
     return eer, auc_roc, eer_threshold
 
 
+def resize_and_save_image(image_path, output_path):
+    image = cv2.imread(image_path)
+    if image is None:
+        raise InternalServerError(f"Could not read image at {image_path}")
+    scale_percent = 50
+    width = int(image.shape[1] * scale_percent / 100)
+    height = int(image.shape[0] * scale_percent / 100)
+    resized = cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
+    cv2.imwrite(output_path, resized, [int(cv2.IMWRITE_JPEG_QUALITY), 30])
+
+
 def train_model() -> None:
     for file in os.listdir(f"{FILE_PATH}/../cache/manual_wv/samples"):
         if file.endswith(".png") and file.startswith("sample"):
@@ -424,10 +439,17 @@ def train_model() -> None:
     labels = np.concatenate(
         [np.zeros(len(val), dtype=int), np.ones(len(val_other), dtype=int)]
     )
+
+    max_error = np.max(y_scores)
     _, _, threshold = compute_eer(labels, y_scores)
 
-    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), "w") as f:
-        f.write(str(threshold))
+    json_data = {
+        "max_error": max_error,
+        "threshold": threshold,
+    }
+
+    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.json"), "w") as f:
+        json.dump(json_data, f, indent=2)
 
 
 def predict_feature(x, idx, model):
@@ -454,7 +476,13 @@ def predict(x, model):
 
 
 def process_explanations(
-    test_features_scaled:pd.DataFrame, test_features: pd.DataFrame, model: tf.keras.Model, scaler, threshold, y_pred
+    test_features_scaled: pd.DataFrame,
+    test_features: pd.DataFrame,
+    model: tf.keras.Model,
+    scaler,
+    threshold,
+    y_pred,
+    confidence: float,
 ) -> None:
     normal_features = pd.DataFrame()
     for file in os.listdir(all_features):
@@ -496,17 +524,19 @@ def process_explanations(
         dtype=float,
     )
     background_set = normal_features_scaled
-    for i in tqdm(range(len(columns)), desc="Computing SHAP values"):
-        fe_model = build_feature_error_model(model, i)
-        explainer = shap.DeepExplainer(fe_model, background_set)
-        shap_val = explainer.shap_values(test_features_scaled)
-        shap_arr = np.squeeze(shap_val, axis=2)
-        pos_shap = np.where(shap_arr > 0, shap_arr, 0)
-        neg_shap = np.where(shap_arr < 0, shap_arr, 0)
-        pos_shap_values.iloc[i] = pos_shap.mean(axis=0)
-        neg_shap_values.iloc[i] = neg_shap.mean(axis=0)
+    if (os.environ.get("EXP_ENABLED") == "true"):
+        for i in tqdm(range(len(columns)), desc="Computing SHAP values"):
+            fe_model = build_feature_error_model(model, i)
+            explainer = shap.DeepExplainer(fe_model, background_set)
+            shap_val = explainer.shap_values(test_features_scaled)
+            shap_arr = np.squeeze(shap_val, axis=2)
+            pos_shap = np.where(shap_arr > 0, shap_arr, 0)
+            neg_shap = np.where(shap_arr < 0, shap_arr, 0)
+            pos_shap_values.iloc[i] = pos_shap.mean(axis=0)
+            neg_shap_values.iloc[i] = neg_shap.mean(axis=0)
 
     pos_sum = pos_shap_values.sum(axis=1)
+    neg_sum = neg_shap_values.sum(axis=1)
 
     plt.figure(figsize=(15, 10))
     sns.heatmap(pos_shap_values, cmap="coolwarm", fmt=".2f")
@@ -527,7 +557,28 @@ def process_explanations(
         va="center",
     )
     plt.tight_layout()
-    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/heatmap.png"))
+    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/pos_heatmap.png"))
+
+    plt.figure(figsize=(15, 10))
+    sns.heatmap(neg_shap_values, cmap="coolwarm", fmt=".2f")
+    plt.title("SHAP Value Contributions to Low Reconstruction Errors")
+    plt.xlabel("Input Features")
+    plt.ylabel("Target (Reconstructed) Features")
+    plt.xticks(
+        ticks=np.arange(len(columns)) + 0.5,
+        labels=desc_columns,
+        rotation=90,
+        ha="center",
+    )
+
+    plt.yticks(
+        ticks=np.arange(len(columns)) + 0.5,
+        labels=desc_columns,
+        rotation=0,
+        va="center",
+    )
+    plt.tight_layout()
+    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/neg_heatmap.png"))
 
     explanation = shap.Explanation(
         values=pos_sum,
@@ -538,49 +589,74 @@ def process_explanations(
     plt.figure(figsize=(15, 10))
     shap.plots.waterfall(explanation, show=False)
     plt.savefig(
-        os.path.join(FILE_PATH, "../cache/manual_wv/result/waterfall.png"),
+        os.path.join(FILE_PATH, "../cache/manual_wv/result/pos_waterfall.png"),
         bbox_inches="tight",
         pad_inches=0.2,
     )
 
-    shutil.copy(
+    explanation = shap.Explanation(
+        values=neg_sum,
+        base_values=np.mean(predict(background_set, model)),
+        data=np.mean(test_features_scaled, axis=0),
+        feature_names=desc_columns,
+    )
+    plt.figure(figsize=(15, 10))
+    shap.plots.waterfall(explanation, show=False)
+    plt.savefig(
+        os.path.join(FILE_PATH, "../cache/manual_wv/result/neg_waterfall.png"),
+        bbox_inches="tight",
+        pad_inches=0.2,
+    )
+
+    resize_and_save_image(
         os.path.join(FILE_PATH, "../cache/manual_wv/samples/sample1.png"),
         os.path.join(FILE_PATH, "../cache/manual_wv/result/known.png"),
     )
-    shutil.copy(
+
+    resize_and_save_image(
         os.path.join(FILE_PATH, "../cache/manual_wv/samples/test.png"),
         os.path.join(FILE_PATH, "../cache/manual_wv/result/test.png"),
     )
 
     json_data = {
-        "same_writer": ((1-y_pred).tolist()),
+        "same_writer": ((1 - y_pred).tolist()),
         "score": np.mean(test_reconstructed).item(),
         "threshold": threshold,
+        "confidence": confidence,
         "test_reconstructed": test_reconstructed.tolist(),
         "normal_reconstructed": normal_reconstructed.tolist(),
         "columns": list(desc_columns),
         "pos_sum": pos_sum.tolist(),
+        "neg_sum": neg_sum.tolist(),
         "normal_features": normal_features.mean(axis=0).tolist(),
         "test_features": test_features.mean(axis=0).tolist(),
     }
 
     try:
+        if (os.environ.get("EXP_ENABLED") != "true"):
+            raise Exception("Explanation generation is disabled.")
         explanation = client.responses.create(
-            model="gpt-4.1", 
+            model="o4-mini",
+            reasoning={"effort": "medium"},
             instructions=system_instructions,
             input=prompt.format(json=json.dumps(json_data, indent=2)),
-            temperature=0,
         )
         json_data["description"] = explanation.output_text
     except Exception as e:
         print("Failed to generate content: %s", e)
-        json_data["description"] = "Failed to generate the AI explanation due to an error."
+        json_data["description"] = (
+            "Failed to generate the AI explanation due to an error."
+        )
 
     output_json_path = os.path.join(FILE_PATH, "../cache/manual_wv/result/result.json")
 
     with open(output_json_path, "w") as f:
         json.dump(json_data, f, indent=2)
 
+def reconstruction_confidence(error, threshold, sharpness=15):
+    sigmoid = lambda x: 1 / (1 + math.exp(-sharpness * abs(x)))
+    confidence = sigmoid(error - threshold)
+    return confidence
 
 def perform_manual_writer_verification(
     img_path: str = "cache/manual_wv/samples/test.png",
@@ -598,9 +674,21 @@ def perform_manual_writer_verification(
     predict = model.predict(test_features_scaled, verbose=0)
     y_scores = np.mean(np.square(test_features_scaled - predict), axis=1)
     y_score = np.mean(y_scores)
-    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.txt"), "r") as f:
-        threshold = float(f.read().strip())
+    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.json"), "r") as f:
+        data = json.load(f)
+        threshold = data["threshold"]
+        max_error = data["max_error"]
     y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
+    confidence = reconstruction_confidence(y_score, threshold)
+    print(confidence)
     os.makedirs(os.path.join(FILE_PATH, "../cache/manual_wv/result"), exist_ok=True)
-    process_explanations(test_features_scaled, test_features, model, scaler, threshold, y_pred)
+    process_explanations(
+        test_features_scaled,
+        test_features,
+        model,
+        scaler,
+        threshold,
+        y_pred,
+        confidence,
+    )
     return "Same Writer" if y_pred == 0 else "Different Writer"

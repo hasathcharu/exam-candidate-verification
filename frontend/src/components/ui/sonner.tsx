@@ -14,7 +14,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         // Add Tailwind (or custom CSS) to shape your toast
         classNames: {
           toast: '!bg-white/30 !backdrop-filter !backdrop-blur-sm !border-gray-200 !border !rounded-3xl !shadow-lg !px-5 !w-auto justify-self-center',
-          title: 'text-lg',
+          title: 'text-[14px]',
           description: 'text-sm text-gray-600',
           actionButton: 'ml-2 px-3 py-1 rounded-full bg-blue-500 text-white',
           closeButton: 'ml-2 text-gray-400 hover:text-gray-600',
