@@ -95,7 +95,9 @@ def signature_verification():
     if image.filename == "":
         return jsonify({"error": "No selected file"}), 400
     os.makedirs(f"{FILE_PATH}/../cache/ofsfd/samples", exist_ok=True)
-    image.save(f"{FILE_PATH}/../cache/ofsfd/samples/test.png")
+    # image.save(f"{FILE_PATH}/../cache/ofsfd/samples/test.png")
+    with open(f"{FILE_PATH}/../cache/ofsfd/samples/test.png", 'wb') as f:
+        f.write(image.read())
     
     label, confidence = predict_signature_type(f"{FILE_PATH}/../cache/ofsfd/samples/test.png")
     # label, confidence = predict_signature_type("backend\tests\ofsfd\1_0.png")
