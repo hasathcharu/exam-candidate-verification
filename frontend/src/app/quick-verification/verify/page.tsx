@@ -103,7 +103,7 @@ export default function App() {
                   onOpenChange={(next) => next && setOpen(true)}
                 >
                   <AlertDialogContent>
-                    <LoadingDialog title='Detecting signature...' />
+                    <LoadingDialog title='Checking Signature...' />
                   </AlertDialogContent>
                 </AlertDialog>
                 {label != '' && (confidence*100).toFixed(2)} {'%  '} {label}

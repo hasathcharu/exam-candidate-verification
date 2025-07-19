@@ -6,7 +6,7 @@ export default function App() {
   return (
     <div className='flex flex-col h-screen'>
       {/* Main content */}
-      <div className="absolute inset-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat opacity-40" />
+      <div className="fixed inset-0 bg-[url('/background.png')] bg-cover bg-center bg-no-repeat opacity-40" />
       <main className='flex-grow'>
         <div className='hero h-full'>
           <div className='hero-content text-center'>
