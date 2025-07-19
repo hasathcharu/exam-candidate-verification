@@ -553,7 +553,7 @@ def process_explanations(
     )
 
     json_data = {
-        "prediction": y_pred.tolist(),
+        "prediction": ((1-y_pred).tolist()),
         "score": np.mean(test_reconstructed).item(),
         "threshold": threshold,
         "test_reconstructed": test_reconstructed.tolist(),
