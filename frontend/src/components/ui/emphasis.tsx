@@ -8,11 +8,11 @@ export default function Emphasis({
   switch (type) {
     case 'green':
       return (
-        <span className='bg-gradient-to-br from-lime-400 to-lime-500 py-1 px-2 rounded-sm'>{children}</span>
+        <span className='bg-[var(--color-success)] text-white py-1 px-2 rounded-sm'>{children}</span>
       );
     case 'red':
       return (
-        <span className='bg-gradient-to-br from-rose-400 to-red-400 rounded-sm px-2 py-1'>{children}</span>
+        <span className='bg-[var(--color-error)] text-white rounded-sm px-2 py-1'>{children}</span>
       );
     case 'ai':
       return (

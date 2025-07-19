@@ -1,17 +1,17 @@
-// app/auto-start/page.tsx
 import { redirect } from 'next/navigation';
 
 export default async function Page() {
+  let res;
   try {
-    const res = await fetch(process.env.NEXT_PUBLIC_API + 'train/status', {
+    res = await fetch(process.env.NEXT_PUBLIC_API + 'train/status', {
       method: 'GET',
       cache: 'no-store',
     });
-    if (res.ok) {
-      return redirect('/personalized-verification/verify');
-    }
   } catch (err) {
-    console.error('Error fetching train status:', err);
+    console.log('Error fetching train status:', err);
+  }
+  if (res?.ok) {
+    redirect('/personalized-verification/verify');
   }
   redirect('/personalized-verification/train');
 }

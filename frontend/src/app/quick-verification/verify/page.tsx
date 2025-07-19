@@ -297,7 +297,6 @@ export default function App() {
                 <br />
                 <AlertDialog
                   open={open}
-                  onOpenChange={(next) => next && setOpen(true)}
                 >
                   <AlertDialogContent>
                     <LoadingDialog title={loadingText} />
