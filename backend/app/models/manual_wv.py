@@ -90,21 +90,21 @@ desc_columns = [
     "Chaincode Histogram Up-Left",
     "Chaincode Histogram Up",
     "Chaincode Histogram Up-Right",
-    "Primary Contour-Curvature Pattern",
-    "Secondary Contour-Curvature Pattern",
-    "Tertiary Contour-Curvature Pattern",
-    "Quaternary Contour-Curvature Pattern",
-    "Fifth Contour-Curvature Pattern",
-    "Sixth Contour-Curvature Pattern",
-    "Seventh Contour-Curvature Pattern",
-    "Eighth Contour-Curvature Pattern",
-    "Ninth Contour-Curvature Pattern",
-    "Tenth Contour-Curvature Pattern",
-    "Eleventh Contour-Curvature Pattern",
-    "Twelfth Contour-Curvature Pattern",
-    "Thirteenth Contour-Curvature Pattern",
-    "Fourteenth Contour-Curvature Pattern",
-    "Fifteenth Contour-Curvature Pattern",
+    "Contour-Hinge Principal Component 1",
+    "Contour-Hinge Principal Component 2",
+    "Contour-Hinge Principal Component 3",
+    "Contour-Hinge Principal Component 4",
+    "Contour-Hinge Principal Component 5",
+    "Contour-Hinge Principal Component 6",
+    "Contour-Hinge Principal Component 7",
+    "Contour-Hinge Principal Component 8",
+    "Contour-Hinge Principal Component 9",
+    "Contour-Hinge Principal Component 10",
+    "Contour-Hinge Principal Component 11",
+    "Contour-Hinge Principal Component 12",
+    "Contour-Hinge Principal Component 13",
+    "Contour-Hinge Principal Component 14",
+    "Contour-Hinge Principal Component 15",
     "Number of Strong Leftward Slant Components",
     "Number of Moderate-Strong Left Slant Components",
     "Number of Moderate Left Slant Components",
@@ -129,38 +129,58 @@ desc_columns = [
 ]
 
 prompt = """
-You are a well paid, well esteemed, handwriting-forensics analyst. 
-I will give you:  
-- A list of feature names (columns). 
-- Two arrays of features:
-            - normal_features (features representative of known samples)     
-            - test_features (the features for the sample under test)
-- Two arrays of reconstruction errors:    
-         - normal_reconstructed (the average error for known samples)     
-         - test_reconstructed (the error for the sample under test)   
-- An array of SHAP positive contributions (pos_sum) indicating each feature's push toward the model's high reconstruction error.
-- An array of SHAP negative contributions (neg_sum) indicating each feature's push toward the model's low reconstruction error.   
-- A binary prediction (same_writer) (1 = same writer, 0 = different writer).  
-- A decision threshold (threshold) for anomaly detection.
-- The score (score) for the sample under test, which is the average reconstruction error.
-- A confidence score (confidence) indicating the model's certainty in its prediction.
-
-Your task (in under 400 words, with clear paragraph breaks, without numbered headings):  
-
-1. Identify the top 5 features with the highest SHAP positive values.   
-2. For each of those features, state in tabular form:      
-      a. The normal feature values vs. the test sample's feature values.         
-      c. A plain-English explanation of what a human should look for in actual handwriting (e.g., “number of exterior curves: normally, the writer tends to join letters, while this sample shows more disjoint strokes”). You can use the normal_features array to understand what is normal for the known writer, and the test_features array to understand what is abnormal for the sample under test. 
-3. Summarize why the model classified this as an imposter (or genuine) based on both SHAP and reconstruction errors. Look out for relationships between features (ie, even if a certain feature is not abnormal, it may be the combination of features that leads to the classification).
-
-Explain it like you are explaining to a secondary schooler, and maintain a warm and professional tone, so that anyone can understand. 
-
-Here is the data in JSON format:
+Here is the output of the autoencoder. 
 
 {json}
+
+1. Select five key features
+   - If "same_writer" == 0 (classified as different writer),
+     sort pos_sum descending and choose the top five indices.
+   - If "same_writer" == 1 (classified as known writer),
+     sort neg_sum ascending (most negative) and choose the top five.
+
+2. Produce the markdown table using:
+   | Feature | Normal Value | Test Value | What to look for |
+
+3. Four-paragraph narrative
+   - Para 1: friendly recap of the verdict and confidence.  
+   - Para 2: explain what the table shows.  
+   - Para 3: highlight any cross-feature interactions the model may have noticed.  
+   - Para 4: summarise how reconstruction errors and SHAP together led to the decision.
 """
 
-system_instructions = "You are a well paid, well esteemed, handwriting-forensics analyst. You will be given a JSON object with the data and you will have to explain it in under 400 words, with clear paragraph breaks, without numbered headings. Use a warm and professional tone, so that anyone can understand. When referring to the predictions, use 'different writer' or 'known writer'. The model that predicted the results is a personalized global autoencoder trained on handwriting features, for the specific writer. The normal_features are just reference samples of the target writer. The features are derived from the segmentation of handwritten lines and the character 'e'. The model uses reconstruction errors and SHAP values to determine the likelihood of the sample being from a different writer."
+system_instructions = """
+You are a well-paid, well-esteemed handwriting-forensics analyst.
+Your task is to explain the output of a personalised auto-encoder that decides
+whether a test handwriting sample comes from the *known writer* or a *different writer*. You will receive a JSON object with the following keys:
+- "same_writer": 0 or 1, indicating if the test sample is from the different writer or the known writer.
+- "score": the average reconstruction error of the test sample.
+- "threshold": the threshold used to classify the test sample.
+- "confidence": a float between 0 and 1, indicating the model's confidence in its prediction.
+- "test_features": the test sample's features
+- "normal_features": the known writer's features.
+- "test_reconstructed": a list of reconstruction errors for each feature in the test sample.
+- "normal_reconstructed": a list of reconstruction errors for each feature in the known writer's sample.
+- "pos_sum": a list of positive SHAP values for each feature in the test sample.
+- "neg_sum": a list of negative SHAP values for each feature in the test sample.
+- "columns": a list of feature names corresponding to the reconstruction errors.
+- For Contour-Hinge Principal Components, just say "They explain shape and curvature of letters by analyzing the angles between contour segments. Look for differences in curvature and angles between segments in the handwriting."
+- For Letter 'e' Shape Descriptors, just say "They capture the shape of the letter 'e' in the handwriting. Look for differences in the shape and curvature of the letter 'e' between the two samples."
+- For the rest of the features, compare the values in the test sample with those of the known writer, and explain what the differences indicate about the handwriting characteristics of the test sample.
+
+Output requirements
+- ≤ 400 words total, plain English, warm yet professional, explanatory, third person.  
+- Use exactly four short paragraphs with *topics*.  
+- Include one markdown table, formatted like the template below; no other tables or lists.  
+- Refer to the two classes only as “known writer” and “different writer”.  
+- Do not number headings.  
+- Keep each cell in the “What to look for” column ≤ 50 words.  
+- Do not mention SHAP, reconstruction error, or threshold outside the explanation paragraph.
+
+Table template
+| Feature | Normal Value | Test Value | What to look for |
+|---------|--------------|------------|------------------|
+"""
 
 local_feature_headers = [
     "sample",
@@ -636,7 +656,7 @@ def process_explanations(
         if (os.environ.get("EXP_ENABLED") != "true"):
             raise Exception("Explanation generation is disabled.")
         explanation = client.responses.create(
-            model="o4-mini",
+            model="o3",
             reasoning={"effort": "medium"},
             instructions=system_instructions,
             input=prompt.format(json=json.dumps(json_data, indent=2)),
@@ -680,7 +700,7 @@ def perform_manual_writer_verification(
         max_error = data["max_error"]
     y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
     confidence = reconstruction_confidence(y_score, threshold)
-    print(confidence)
+    print("Prediction:", "Same Writer" if y_pred == 0 else "Different Writer")
     os.makedirs(os.path.join(FILE_PATH, "../cache/manual_wv/result"), exist_ok=True)
     process_explanations(
         test_features_scaled,
