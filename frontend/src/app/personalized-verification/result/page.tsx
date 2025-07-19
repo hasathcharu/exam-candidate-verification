@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Markdown from '@/components/ui/markdown';
 import ImageViewer from '@/components/ui/image-viewer';
 import Emphasis from '@/components/ui/emphasis';
+import PvResults from '@/components/pv-results';
 
 export default function App() {
   const router = useRouter();
@@ -14,8 +15,25 @@ export default function App() {
   const [description, setDescription] = useState('');
   const [resetButtonLoading, setResetButtonLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [resultsAvailable, setResultsAvailable] = useState(false);
+  const [currentResults, setCurrentResults] = useState({
+    sigGenuine: false,
+    sigConfidence: 0.0,
+    writerSame: false,
+    writerConfidence: 0.0,
+    personalizedWriterSame: false,
+    personalizedWriterConfidence: 0.0,
+  });
 
   useEffect(() => {
+    let storage = localStorage.getItem('quick_result');
+    let result: any = {};
+    if (storage) {
+      setResultsAvailable(true);
+      result = JSON.parse(storage || '{}');
+    } else {
+      return;
+    }
     const fetchData = async () => {
       try {
         const res = await fetch(
@@ -25,11 +43,14 @@ export default function App() {
           }
         );
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        const result = await res.json();
-        setDescription(result.description || 'No description available.');
-        if (result.prediction === 1) {
+        const response = await res.json();
+        setDescription(response.description || 'No description available.');
+        if (response.same_writer === 0) {
           setDifferentWriter(true);
         }
+        result['personalizedWriterSame'] = response.same_writer;
+        result['personalizedWriterConfidence'] = response.confidence;
+        setCurrentResults(result);
         setLoaded(true);
       } catch (err: any) {
         router.push('/personalized-verification');
@@ -37,7 +58,7 @@ export default function App() {
       }
     };
     fetchData();
-  });
+  }, []);
 
   async function handleReset() {
     setResetButtonLoading(true);
@@ -56,12 +77,12 @@ export default function App() {
   }
   return (
     loaded && (
-      <div className='flex flex-col h-screen pt-10'>
+      <div className='flex flex-col min-h-screen pt-10'>
         <main className='flex-grow'>
           <div className='hero h-full'>
             <div className='hero-content'>
               <div className='max-w-[1024px]'>
-                <h1 className='text-3xl font-bold text-center'>
+                <h1 className='text-3xl font-bold text-center mt-10'>
                   Personalized Writer Verification Report
                 </h1>
                 <br />
@@ -87,33 +108,35 @@ export default function App() {
                     actions based on the below report.
                   </p>
                 )}
-                                <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
+                <div className='flex items-center justify-center'>
+                  {resultsAvailable && <PvResults data={currentResults} />}
+                </div>
+                <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
                   Samples
                 </h2>
-                <div className='flex gap-10 max-w-3xl mx-auto'>
-                  <div className='flex-1 w-full h-full'>
-                    <h3 className='text-center mb-2 font-bold'>Known Sample</h3>
-                    {/* <div className='w-full h-full'> */}
-                      <ImageViewer
-                        src={process.env.NEXT_PUBLIC_API + 'results/known.png'}
+                <div className='flex justify-between max-w-3xl px-4 font-bold mb-2'>
+                  <span>Known Sample</span>
+                  <span>Test Sample</span>
+                </div>
+                <div className='flex gap-10 mb-3 max-w-3xl mx-auto'>
+                  <figure className='diff aspect-16/9 rounded-3xl' tabIndex={0}>
+                    <div className='diff-item-1' role='img' tabIndex={0}>
+                      <img
                         alt='Known Sample'
-                        className='w-full object-fill h-56 rounded-lg shadow-md'
+                        src={process.env.NEXT_PUBLIC_API + 'results/known.png'}
                       />
-                    {/* </div> */}
-                  </div>
-                  <div className='flex-1 w-full h-full'>
-                    <h3 className='text-center mb-2 font-bold'>Test Sample</h3>
-                    {/* <div className='w-full h-full'> */}
-                      <ImageViewer
-                        src={process.env.NEXT_PUBLIC_API + 'results/test.png'}
+                    </div>
+                    <div className='diff-item-2' role='img'>
+                      <img
                         alt='Test Sample'
-                        className='w-full object-fill h-56 rounded-lg shadow-md'
+                        src={process.env.NEXT_PUBLIC_API + 'results/test.png'}
                       />
-                    {/* </div> */}
-                  </div>
+                    </div>
+                    <div className='diff-resizer'></div>
+                  </figure>
                 </div>
                 <h2 className='py-6 pb-1 text-lg mx-auto font-bold max-w-3xl'>
-                  <Emphasis type='ai'>AI Explanation</Emphasis>
+                  <Emphasis type='ai'>Personalized Explanation</Emphasis>
                 </h2>
                 <div className='py-6 mx-auto'>
                   <Markdown text={description} />
@@ -130,19 +153,35 @@ export default function App() {
                   className='w-full h-auto rounded-lg shadow-md max-w-3xl mx-auto'
                 />
                 <h2 className='py-6 text-lg font-bold  max-w-3xl mx-auto'>
-                  SHAP Waterfall Plot
+                  Most Anomalous Features
                 </h2>
                 <img
-                  src={process.env.NEXT_PUBLIC_API + 'results/waterfall.png'}
-                  alt='SHAP Waterfall Plot'
+                  src={process.env.NEXT_PUBLIC_API + 'results/pos_waterfall.png'}
+                  alt='Most Anomalous Features'
                   className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
                 />
                 <h2 className='py-6 text-lg font-bold  max-w-3xl mx-auto'>
-                  Feature Level Heatmap
+                  Most Normal Features
                 </h2>
                 <img
-                  src={process.env.NEXT_PUBLIC_API + 'results/heatmap.png'}
-                  alt='Reconstruction Error'
+                  src={process.env.NEXT_PUBLIC_API + 'results/neg_waterfall.png'}
+                  alt='Most Normal Features'
+                  className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
+                />
+                <h2 className='py-6 text-lg font-bold  max-w-3xl mx-auto'>
+                  Anomalous Feature Heatmap
+                </h2>
+                <img
+                  src={process.env.NEXT_PUBLIC_API + 'results/pos_heatmap.png'}
+                  alt='Anomalous Feature Heatmap'
+                  className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
+                />
+                <h2 className='py-6 text-lg font-bold  max-w-3xl mx-auto'>
+                  Normal Feature Heatmap
+                </h2>
+                <img
+                  src={process.env.NEXT_PUBLIC_API + 'results/ng_heatmap.png'}
+                  alt='Normal Feature Heatmap'
                   className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
                 />
                 <br />

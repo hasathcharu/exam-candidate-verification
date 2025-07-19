@@ -1,7 +1,7 @@
 'use client';
 import Footer from '@/components/footer';
 import { FileUploadComponent } from '@/components/file-upload-component';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -10,12 +10,28 @@ import {
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import LoadingDialog from '@/components/loading-dialog';
+import CurrentResults from '@/components/current-results';
 
 export default function App() {
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [open, setOpen] = useState(false);
   const [resetButtonLoading, setResetButtonLoading] = useState(false);
+  const [resultsAvailable, setResultsAvailable] = useState(false);
+  const [currentResults, setCurrentResults] = useState({
+    sigGenuine: false,
+    sigConfidence: 0.0,
+    writerSame: false,
+    writerConfidence: 0.0,
+  });
+
+  useEffect(() => {
+    const result = localStorage.getItem('quick_result');
+    if (result) {
+      setResultsAvailable(true);
+      setCurrentResults(JSON.parse(result));
+    }
+  }, []);
   async function handleVerifier() {
     if (files.length < 1) {
       toast.error('Please upload a test sample.');
@@ -67,13 +83,13 @@ export default function App() {
     }
   }
   return (
-    <div className='flex flex-col h-screen pt-10'>
+    <div className='flex flex-col min-h-screen pt-10'>
       {/* Main content */}
       <main className='flex-grow'>
         <div className='hero h-full'>
           <div className='hero-content'>
             <div className='max-w-xl'>
-              <h1 className='text-3xl font-bold text-center'>
+              <h1 className='text-3xl font-bold text-center mt-10'>
                 Personalized Writer Verification
               </h1>
               <p className='py-6 text-md'>
@@ -81,6 +97,7 @@ export default function App() {
                 Now, you can upload a test sample to verify the writer's
                 identity.
               </p>
+              {resultsAvailable && <CurrentResults data={currentResults} />}
               <h2 className='py-6 text-md font-bold'>
                 Upload your test sample here
               </h2>

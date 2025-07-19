@@ -30,16 +30,16 @@ export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { li
     <FileUpload
       maxFiles={limit}
       maxSize={100 * 1024 * 1024}
-      className='w-full'
+      className='w-full my-4'
       value={value}
       onValueChange={onValueChange}
       onFileReject={onFileReject}
       required
       multiple={limit > 1}
     >
-      <FileUploadDropzone>
+      <FileUploadDropzone className='rounded-3xl'>
         <div className='flex flex-col items-center gap-1 text-center'>
-          <div className='flex items-center justify-center rounded-full border p-2.5'>
+          <div className='flex items-center justify-center rounded-2xl border p-2.5'>
             <Upload className='size-6 text-muted-foreground' />
           </div>
           <p className='font-medium text-sm'>Drop your sample{limit > 1? 's':''} here!</p>
@@ -49,13 +49,13 @@ export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { li
           </p>
         </div>
         <FileUploadTrigger asChild>
-          <button className='btn btn-block'>Choose File</button>
+          <button className='btn btn-block btn-ghost'>Choose File</button>
         </FileUploadTrigger>
       </FileUploadDropzone>
       <FileUploadList>
         {value.map((file, index) => (
-          <FileUploadItem key={index} value={file}>
-            <FileUploadItemPreview />
+          <FileUploadItem key={index} value={file} className='rounded-3xl'>
+            <FileUploadItemPreview className='rounded-sm'/>
             <FileUploadItemMetadata />
             <FileUploadItemDelete asChild>
               <button className='btn btn-circle'>
