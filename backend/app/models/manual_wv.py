@@ -515,7 +515,7 @@ def process_explanations(
 
     test_reconstructed = np.mean(predict(test_features_scaled, model), axis=0)
     normal_reconstructed = np.mean(predict(normal_features_scaled, model), axis=0)
-
+    print("Test Reconstructed Error:", np.mean(test_reconstructed))
     plt.figure(figsize=(10, 7))
     plt.plot(test_reconstructed, label="Test Reconstructed Error")
     plt.plot(normal_reconstructed, label="Normal Reconstructed Error")
@@ -700,7 +700,10 @@ def perform_manual_writer_verification(
         max_error = data["max_error"]
     y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
     confidence = reconstruction_confidence(y_score, threshold)
-    print("Prediction:", "Same Writer" if y_pred == 0 else "Different Writer")
+    print("Prediction\t: ", "\033[91m" + ("Same Writer" if y_pred == 0 else "Different Writer") + "\033[0m")
+    print("Score\t\t: ", "\033[91m" + str(y_score) + "\033[0m")
+    print("Threshold\t: ", "\033[91m" + str(threshold) + "\033[0m")
+    print("Confidence\t: ", "\033[91m" + str(confidence) + "\033[0m")
     os.makedirs(os.path.join(FILE_PATH, "../cache/manual_wv/result"), exist_ok=True)
     process_explanations(
         test_features_scaled,
