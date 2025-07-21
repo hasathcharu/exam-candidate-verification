@@ -2,10 +2,7 @@
 import Footer from '@/components/footer';
 import { FileUploadComponent } from '@/components/file-upload-component';
 import { useEffect, useState } from 'react';
-import {
-  AlertDialog,
-  AlertDialogContent,
-} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import LoadingDialog from '@/components/loading-dialog';
@@ -33,8 +30,20 @@ export default function App() {
       setResultsAvailable(true);
       setCurrentResults(JSON.parse(result));
     } else {
-        setQVOpen(true);
+      setQVOpen(true);
+      return;
     }
+    async function fetchData() {
+      try {
+        const res = await fetch(process.env.NEXT_PUBLIC_API + 'train/status');
+        if (!res.ok) {
+            router.push('/personalized-verification/train');
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    }
+    fetchData();
   }, []);
   async function handleVerifier() {
     if (files.length < 1) {
@@ -58,10 +67,6 @@ export default function App() {
         }
       );
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const payload = await res.json();
-      if (res.status !== 200) {
-        throw new Error(payload.message || 'Training failed');
-      }
       router.push('/personalized-verification/result');
       setOpen(false);
     } catch (err: any) {
@@ -137,13 +142,7 @@ export default function App() {
                     <span className='loading loading-infinity'></span>
                   </button>
                 )}
-                <AlertDialog
-                  open={open}
-                >
-                  <AlertDialogContent>
-                    <LoadingDialog title='Generating Report...' />
-                  </AlertDialogContent>
-                </AlertDialog>
+                <LoadingDialog open={open} title='Generating Report...' />
                 <QuickAlert open={qVOpen} />
               </div>
             </div>

@@ -33,7 +33,7 @@ export default function Home({
       break;
   }
   const CONFIDENCE_THRESHOLD = parseFloat(
-    process.env.CONFIDENCE_THRESHOLD || '0.7'
+    process.env.NEXT_PUBLIC_CONFIDENCE_THRESHOLD || '0.7'
   );
   let color = 'success';
   if (confidence < CONFIDENCE_THRESHOLD) {

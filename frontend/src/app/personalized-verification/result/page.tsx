@@ -8,7 +8,7 @@ import Markdown from '@/components/ui/markdown';
 import ImageViewer from '@/components/ui/image-viewer';
 import Emphasis from '@/components/ui/emphasis';
 import PvResults from '@/components/pv-results';
-import { FlaskConical, Trash2 } from 'lucide-react';
+import { FlaskConical, Sparkles, Trash2 } from 'lucide-react';
 import QuickAlert from '@/components/quick-alert';
 
 export default function App() {
@@ -119,7 +119,15 @@ export default function App() {
                   {resultsAvailable && <PvResults data={currentResults} />}
                 </div>
                 <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
-                  Samples
+                  Signature Sample
+                </h2>
+                <img
+                        alt='Signature Sample'
+                        src={process.env.NEXT_PUBLIC_API + 'results/test-sig.png'}
+                        className='w-72 h-32 rounded-3xl object-fill'
+                />
+                <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
+                  Handwriting Samples
                 </h2>
                 <div className='flex justify-between max-w-3xl px-4 font-bold mb-2'>
                   <span>Known Sample</span>
@@ -143,7 +151,7 @@ export default function App() {
                   </figure>
                 </div>
                 <h2 className='py-6 pb-1 text-lg mx-auto font-bold max-w-3xl'>
-                  <Emphasis type='ai'>Personalized Explanation</Emphasis>
+                  <Emphasis type='ai'><Sparkles size={20} /> Personalized Explanation</Emphasis>
                 </h2>
                 <div className='py-6 mx-auto'>
                   <Markdown text={description} />

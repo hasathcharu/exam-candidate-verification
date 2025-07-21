@@ -2,7 +2,6 @@
 import Footer from '@/components/footer';
 import { FileUploadComponent } from '@/components/file-upload-component';
 import { useState } from 'react';
-import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import LoadingDialog from '@/components/loading-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -103,12 +102,13 @@ export default function App() {
 
         results.writerSame = data.same_writer;
         if (data.same_writer) {
-            results.writerConfidence = 1 - (data.distance / data.threshold);
+          results.writerConfidence = 1 - data.distance / data.threshold;
         } else {
-            results.writerConfidence = (data.distance - data.threshold) / (Math.SQRT2 - data.threshold);
+          results.writerConfidence =
+            (data.distance - data.threshold) / (Math.SQRT2 - data.threshold);
         }
 
-        localStorage.setItem("quick_result", JSON.stringify(results));
+        localStorage.setItem('quick_result', JSON.stringify(results));
         router.push('/quick-verification/result');
       } catch (error) {
         console.error(error);
@@ -146,7 +146,7 @@ export default function App() {
         console.log('Two-speed verification result:', data);
         results.writerSame = data.same_writer;
         results.writerConfidence = data.probability;
-        localStorage.setItem("quick_result", JSON.stringify(results));
+        localStorage.setItem('quick_result', JSON.stringify(results));
         router.push('/quick-verification/result');
       } catch (error) {
         console.error(error);
@@ -167,6 +167,7 @@ export default function App() {
               <h1 className='text-3xl font-bold text-center mb-3 mt-10'>
                 Quick Writer Verification
               </h1>
+              <button onClick={()=>{setOpen(true); setTimeout(()=>setLoadingText("HI"), 2000)}}>hi</button>
               <p className='text-md'>
                 This is the quick verification mode that detects signature
                 forgries and uses a pre-trained model to compare handwriting
@@ -295,13 +296,7 @@ export default function App() {
                 <br />
                 <br />
                 <br />
-                <AlertDialog
-                  open={open}
-                >
-                  <AlertDialogContent>
-                    <LoadingDialog title={loadingText} />
-                  </AlertDialogContent>
-                </AlertDialog>
+                <LoadingDialog open={open} title={loadingText} />
               </div>
             </div>
           </div>

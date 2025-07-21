@@ -66,6 +66,7 @@ export default function App() {
       if (res.status !== 200) {
         throw new Error(payload.message || 'Training failed');
       }
+      setOpen(false);
       setTrainingComplete(true);
     } catch (err: any) {
       setOpen(false);
@@ -73,6 +74,7 @@ export default function App() {
       console.log(err);
     }
   }
+  console.log(files);
   return (
     <div className='flex flex-col min-h-screen pt-10'>
       {/* Main content */}
@@ -108,35 +110,24 @@ export default function App() {
                 >
                   <BrainCircuit /> Train Verifier
                 </button>
-                <AlertDialog open={open}>
+                <AlertDialog open={trainingComplete}>
                   <AlertDialogContent>
-                    {trainingComplete ? (
-                      <span>
-                        <>
-                          <div className='text-center'>
-                            <AlertDialogTitle>
-                              Training Complete!
-                            </AlertDialogTitle>
-                            <br />
-                            <p className='text-sm text-justify mb-4'>
-                              Model is trained successfully. You can now upload a
-                              test sample to verify the writer's identity.
-                            </p>
-                            <Link href='/personalized-verification'>
-                              <button
-                                className='btn btn-primary btn-soft btn-lg btn-wide'
-                              >
-                                <FlaskConical /> Test Sample
-                              </button>
-                            </Link>
-                          </div>
-                        </>
-                      </span>
-                    ) : (
-                      <LoadingDialog title='Training Model...' />
-                    )}
+                    <div className='text-center'>
+                      <AlertDialogTitle>Training Complete!</AlertDialogTitle>
+                      <br />
+                      <p className='text-sm text-justify mb-4'>
+                        Model is trained successfully. You can now upload a test
+                        sample to verify the writer's identity.
+                      </p>
+                      <Link href='/personalized-verification'>
+                        <button className='btn btn-primary btn-soft btn-lg btn-wide'>
+                          <FlaskConical /> Test Sample
+                        </button>
+                      </Link>
+                    </div>
                   </AlertDialogContent>
                 </AlertDialog>
+                <LoadingDialog open={open} title='Training Model...' />
                 <QuickAlert open={qVOpen} />
               </div>
             </div>

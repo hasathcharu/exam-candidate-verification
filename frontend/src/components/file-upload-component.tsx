@@ -1,6 +1,5 @@
 'use client';
 import { toast } from 'sonner';
-import { Toaster } from "@/components/ui/sonner"
 import {
   FileUpload,
   FileUploadDropzone,
@@ -14,15 +13,21 @@ import {
 import { Upload, X } from 'lucide-react';
 import * as React from 'react';
 
-export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { limit?: number, value?: File[], onValueChange?: (files: File[]) => void }) {
-
+export function FileUploadComponent({
+  limit = 1,
+  value = [],
+  onValueChange,
+}: {
+  limit?: number;
+  value?: File[];
+  onValueChange?: (files: File[]) => void;
+}) {
   const onFileReject = React.useCallback((file: File, message: string) => {
     toast.error(message, {
       description: `"${
         file.name.length > 20 ? `${file.name.slice(0, 20)}...` : file.name
       }" has been rejected.`,
       duration: 3000,
-      
     });
   }, []);
 
@@ -42,7 +47,9 @@ export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { li
           <div className='flex items-center justify-center rounded-2xl border p-2.5'>
             <Upload className='size-6 text-muted-foreground' />
           </div>
-          <p className='font-medium text-sm'>Drop your sample{limit > 1? 's':''} here!</p>
+          <p className='font-medium text-sm'>
+            Drop your sample{limit > 1 ? 's' : ''} here!
+          </p>
           <p className='text-muted-foreground text-xs'>
             Or click to browse (max {limit} {limit > 1 ? 'files' : 'file'}, up
             to 100MB{limit > 1 ? ' each' : ''})
@@ -55,7 +62,7 @@ export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { li
       <FileUploadList>
         {value.map((file, index) => (
           <FileUploadItem key={index} value={file} className='rounded-3xl'>
-            <FileUploadItemPreview className='rounded-sm'/>
+            <FileUploadItemPreview className='rounded-sm' />
             <FileUploadItemMetadata />
             <FileUploadItemDelete asChild>
               <button className='btn btn-circle'>

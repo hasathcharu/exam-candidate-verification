@@ -7,17 +7,16 @@ import Link from 'next/link';
 
 export default function App() {
   const router = useRouter();
-
   const [resetButtonLoading, setResetButtonLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const CONFIDENCE_THRESHOLD = parseFloat(
-    process.env.CONFIDENCE_THRESHOLD || '0.7'
+    process.env.NEXT_PUBLIC_CONFIDENCE_THRESHOLD || '0.7'
   );
 
   const [data, setData] = useState({
-    sigLabel: false,
+    sigGenuine: false,
     sigConfidence: 0.0,
-    writerLabel: false,
+    writerSame: false,
     writerConfidence: 0.0,
   });
   console.log(data);
@@ -46,20 +45,23 @@ export default function App() {
     let desc = `
         Both the signature and handwriting verification results agree on the results with high confidence. But if you still have doubts, you can always test with the personalized model for better accuracy.
     `;
-    if (data.sigConfidence < 0.7 || data.writerConfidence < 0.7) {
+    if (
+      data.sigConfidence < CONFIDENCE_THRESHOLD ||
+      data.writerConfidence < CONFIDENCE_THRESHOLD
+    ) {
       desc = `
         The models have low confidence in the results. We recommend testing with the personalized model for better accuracy.
         `;
     }
 
-    if (data.sigLabel != data.writerLabel) {
+    if (data.sigGenuine != data.writerSame) {
       desc = `The two models are disagreeing on the results. We recommend testing with the personalized model for better accuracy.`;
     }
 
     if (
-      data.sigConfidence < 0.7 ||
-      data.writerConfidence < 0.7 ||
-      data.sigLabel != data.writerLabel
+      data.sigConfidence < CONFIDENCE_THRESHOLD ||
+      data.writerConfidence < CONFIDENCE_THRESHOLD ||
+      data.sigGenuine != data.writerSame
     ) {
       title = 'Test with the Personalized Model';
       return (
@@ -69,7 +71,7 @@ export default function App() {
             <p className='mb-2 text-md'>{desc}</p>
             <div className='card-actions justify-end'>
               <Link href='/personalized-verification'>
-                <button className='btn btn-accent'>
+                <button className='btn btn-error'>
                   Train Personalized Model
                 </button>
               </Link>
