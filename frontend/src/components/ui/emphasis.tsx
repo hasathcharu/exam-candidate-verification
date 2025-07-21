@@ -8,15 +8,15 @@ export default function Emphasis({
   switch (type) {
     case 'green':
       return (
-        <span className='bg-[var(--color-success)] text-white py-1 px-2 rounded-sm'>{children}</span>
+        <span className='successgradient errorgradient text py-1 px-2 rounded-sm inline-flex items-center gap-2 justify-center'>{children}</span>
       );
     case 'red':
       return (
-        <span className='bg-[var(--color-error)] text-white rounded-sm px-2 py-1'>{children}</span>
+        <span className='errorgradient text-white rounded-sm px-2 py-1 inline-flex items-center gap-2 justify-center'>{children}</span>
       );
     case 'ai':
       return (
-        <span className='bg-gradient-to-br from-blue-200 to-cyan-200 py-1 px-2 rounded-sm'>{children}</span>
+        <span className='aigradient py-1 px-2 rounded-sm inline-flex items-center gap-2 justify-center'>{children}</span>
       );
   }
 }

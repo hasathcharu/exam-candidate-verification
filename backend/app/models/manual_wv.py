@@ -133,6 +133,8 @@ Here is the output of the autoencoder.
 
 {json}
 
+Your task is:
+
 1. Select five key features
    - If "same_writer" == 0 (classified as different writer),
      sort pos_sum descending and choose the top five indices.
@@ -151,7 +153,7 @@ Here is the output of the autoencoder.
 
 system_instructions = """
 You are a well-paid, well-esteemed handwriting-forensics analyst.
-Your task is to explain the output of a personalised auto-encoder that decides
+Your task is to explain the output of a personalised auto-encoder trained on statistical features (feature_names) that decides
 whether a test handwriting sample comes from the *known writer* or a *different writer*. You will receive a JSON object with the following keys:
 - "same_writer": 0 or 1, indicating if the test sample is from the different writer or the known writer.
 - "score": the average reconstruction error of the test sample.
@@ -163,7 +165,7 @@ whether a test handwriting sample comes from the *known writer* or a *different 
 - "normal_reconstructed": a list of reconstruction errors for each feature in the known writer's sample.
 - "pos_sum": a list of positive SHAP values for each feature in the test sample.
 - "neg_sum": a list of negative SHAP values for each feature in the test sample.
-- "columns": a list of feature names corresponding to the reconstruction errors.
+- "features_names": a list of feature names corresponding to the reconstruction errors.
 - For Contour-Hinge Principal Components, just say "They explain shape and curvature of letters by analyzing the angles between contour segments. Look for differences in curvature and angles between segments in the handwriting."
 - For Letter 'e' Shape Descriptors, just say "They capture the shape of the letter 'e' in the handwriting. Look for differences in the shape and curvature of the letter 'e' between the two samples."
 - For the rest of the features, compare the values in the test sample with those of the known writer, and explain what the differences indicate about the handwriting characteristics of the test sample.
@@ -638,6 +640,11 @@ def process_explanations(
         os.path.join(FILE_PATH, "../cache/manual_wv/result/test.png"),
     )
 
+    shutil.copy(
+        os.path.join(FILE_PATH, "../cache/ofsfd/samples/test.png"),
+        os.path.join(FILE_PATH, "../cache/manual_wv/result/test-sig.png"),
+    )
+
     json_data = {
         "same_writer": ((1 - y_pred).tolist()),
         "score": np.mean(test_reconstructed).item(),
@@ -645,7 +652,7 @@ def process_explanations(
         "confidence": confidence,
         "test_reconstructed": test_reconstructed.tolist(),
         "normal_reconstructed": normal_reconstructed.tolist(),
-        "columns": list(desc_columns),
+        "features_names": list(desc_columns),
         "pos_sum": pos_sum.tolist(),
         "neg_sum": neg_sum.tolist(),
         "normal_features": normal_features.mean(axis=0).tolist(),

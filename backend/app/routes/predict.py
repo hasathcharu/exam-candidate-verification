@@ -1,3 +1,4 @@
+import shutil
 from flask import Blueprint, request, jsonify
 from ..models.manual_wv import perform_manual_writer_verification
 from ..models.automatic_wv import perform_automatic_writer_verification
@@ -89,6 +90,7 @@ def pairwise_writer_verification():
 
 @predict_bp.route("/signature-verification", methods=["POST"])
 def signature_verification():
+    shutil.rmtree(f"{FILE_PATH}/../cache", ignore_errors=True)
     if "sign_file" not in request.files:
         return jsonify({"error": "No file part"}), 400
     image = request.files["sign_file"]
