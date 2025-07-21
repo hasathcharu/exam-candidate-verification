@@ -167,7 +167,6 @@ export default function App() {
               <h1 className='text-3xl font-bold text-center mb-3 mt-10'>
                 Quick Writer Verification
               </h1>
-              <button onClick={()=>{setOpen(true); setTimeout(()=>setLoadingText("HI"), 2000)}}>hi</button>
               <p className='text-md'>
                 This is the quick verification mode that detects signature
                 forgries and uses a pre-trained model to compare handwriting
