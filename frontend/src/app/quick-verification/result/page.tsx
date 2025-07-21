@@ -41,7 +41,7 @@ export default function App() {
   }
 
   function Recommendation() {
-    let title = 'Still need help?';
+    let title = 'Strong Agreement Between Models”';
     let desc = `
         Both the signature and handwriting verification results agree on the results with high confidence. But if you still have doubts, you can always test with the personalized model for better accuracy.
     `;
