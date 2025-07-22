@@ -7,6 +7,7 @@ import LoadingDialog from '@/components/loading-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter } from 'next/navigation';
 import { FlaskConical } from 'lucide-react';
+import Section from '@/components/ui/section';
 
 export default function App() {
   const [sigSample, setSigSample] = useState<File[]>([]);
@@ -162,131 +163,138 @@ export default function App() {
     <div className='flex flex-col min-h-screen pt-10'>
       {/* Main content */}
       <main className='flex-grow'>
-        <div className='hero h-full'>
-          <div className='hero-content'>
-            <div className='max-w-xl'>
-              <h1 className='text-3xl font-bold text-center mb-3 mt-10'>
-                Quick Writer Verification
-              </h1>
-              <p className='text-md'>
-                This is the quick verification mode that detects signature
-                forgries and uses a pre-trained model to compare handwriting
-                samples directly. It requires a minimum number of samples,
-                offering faster results with minimal input.
-              </p>
-              <h2 className='py-6 text-md font-bold'>
-                Signature Forgery Detection
-              </h2>
-              <p className='text-md'>Upload the signature sample.</p>
-              <FileUploadComponent
-                limit={1}
-                value={sigSample}
-                onValueChange={setSigSample}
-              />
-              <h2 className='py-6 text-md font-bold'>
-                Quick Handwriting Verification
-              </h2>
-              <Tabs value={tab} onValueChange={setTab}>
-                <TabsList>
-                  <TabsTrigger value='one-s'>Standard Verification</TabsTrigger>
-                  <TabsTrigger value='two-s'>
-                    Two Speed Verification
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value='one-s'>
-                  Upload a questioned sample and a known reference. We'll
-                  compare them to see if the handwriting matches.
-                  <div className='mt-4 flex gap-4'>
-                    <div>
-                      <span className='text-sm font-medium'>Known Sample</span>
-                      <FileUploadComponent
-                        limit={1}
-                        value={knownFile}
-                        onValueChange={setKnownFile}
-                      />
-                    </div>
-                    <div>
-                      <span className='text-sm font-medium'>
-                        Questioned Sample
-                      </span>
-                      <FileUploadComponent
-                        limit={1}
-                        value={questionedFile}
-                        onValueChange={setQuestionedFile}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value='two-s'>
-                  If you have got normal and fast speed writing from questioned
-                  and known samples, you can upload them here to get verified.
-                  <div className='mt-4 flex gap-4'>
-                    <div>
-                      <div className='text-md font-medium h-7'>
-                        Known Sample
+        <Section>
+          <div className='hero h-full'>
+            <div className='hero-content'>
+              <div className='max-w-xl'>
+                <h1 className='text-3xl font-bold text-center mb-3 mt-10'>
+                  Quick Writer Verification
+                </h1>
+                <p className='text-md'>
+                  This is the quick verification mode that detects signature
+                  forgries and uses a pre-trained model to compare handwriting
+                  samples directly. It requires a minimum number of samples,
+                  offering faster results with minimal input.
+                </p>
+                <h2 className='py-6 text-md font-bold'>
+                  Signature Forgery Detection
+                </h2>
+                <p className='text-md'>Upload the signature sample.</p>
+                <FileUploadComponent
+                  limit={1}
+                  value={sigSample}
+                  onValueChange={setSigSample}
+                />
+                <h2 className='py-6 text-md font-bold'>
+                  Quick Handwriting Verification
+                </h2>
+                <Tabs value={tab} onValueChange={setTab}>
+                  <TabsList>
+                    <TabsTrigger value='one-s'>
+                      Standard Verification
+                    </TabsTrigger>
+                    <TabsTrigger value='two-s'>
+                      Two Speed Verification
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value='one-s'>
+                    Upload a questioned sample and a known reference. We'll
+                    compare them to see if the handwriting matches.
+                    <div className='mt-4 flex gap-4'>
+                      <div>
+                        <span className='text-sm font-medium'>
+                          Known Sample
+                        </span>
+                        <FileUploadComponent
+                          limit={1}
+                          value={knownFile}
+                          onValueChange={setKnownFile}
+                        />
                       </div>
-                      <div className='text-sm font-medium'>Normal Speed</div>
-                      <FileUploadComponent
-                        limit={1}
-                        value={kNormalFile}
-                        onValueChange={setKnownFile}
-                      />
-                    </div>
-                    <div>
-                      <div className='text-md font-medium h-7'>&nbsp;</div>
-                      <div className='text-sm font-medium'>Fast Speed</div>
-                      <FileUploadComponent
-                        limit={1}
-                        value={kFastFile}
-                        onValueChange={setKFastFile}
-                      />
-                    </div>
-                  </div>
-                  <div className='mt-4 flex gap-4'>
-                    <div>
-                      <div className='text-md font-medium h-7'>
-                        Questioned Sample
+                      <div>
+                        <span className='text-sm font-medium'>
+                          Questioned Sample
+                        </span>
+                        <FileUploadComponent
+                          limit={1}
+                          value={questionedFile}
+                          onValueChange={setQuestionedFile}
+                        />
                       </div>
-                      <div className='text-sm font-medium'>Normal Speed</div>
-                      <FileUploadComponent
-                        limit={1}
-                        value={qNormalFile}
-                        onValueChange={setQNormalFile}
-                      />
                     </div>
-                    <div>
-                      <div className='text-md font-medium h-7'>&nbsp;</div>
-                      <div className='text-sm font-medium'>Fast Speed</div>
-                      <FileUploadComponent
-                        limit={1}
-                        value={qFastFile}
-                        onValueChange={setQFastFile}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-              <br />
+                  </TabsContent>
 
-              <div className='text-center w-full justify-center'>
-                <button
-                  className='btn btn-primary btn-soft btn-lg btn-wide disabled:opacity-50 disabled:'
-                  onClick={handleVerifier}
-                >
-                  <FlaskConical /> Test Sample
-                </button>
+                  <TabsContent value='two-s'>
+                    If you have got normal and fast speed writing from
+                    questioned and known samples, you can upload them here to
+                    get verified.
+                    <div className='mt-4 flex gap-4'>
+                      <div>
+                        <div className='text-md font-medium h-7'>
+                          Known Sample
+                        </div>
+                        <div className='text-sm font-medium'>Normal Speed</div>
+                        <FileUploadComponent
+                          limit={1}
+                          value={kNormalFile}
+                          onValueChange={setKnownFile}
+                        />
+                      </div>
+                      <div>
+                        <div className='text-md font-medium h-7'>&nbsp;</div>
+                        <div className='text-sm font-medium'>Fast Speed</div>
+                        <FileUploadComponent
+                          limit={1}
+                          value={kFastFile}
+                          onValueChange={setKFastFile}
+                        />
+                      </div>
+                    </div>
+                    <div className='mt-4 flex gap-4'>
+                      <div>
+                        <div className='text-md font-medium h-7'>
+                          Questioned Sample
+                        </div>
+                        <div className='text-sm font-medium'>Normal Speed</div>
+                        <FileUploadComponent
+                          limit={1}
+                          value={qNormalFile}
+                          onValueChange={setQNormalFile}
+                        />
+                      </div>
+                      <div>
+                        <div className='text-md font-medium h-7'>&nbsp;</div>
+                        <div className='text-sm font-medium'>Fast Speed</div>
+                        <FileUploadComponent
+                          limit={1}
+                          value={qFastFile}
+                          onValueChange={setQFastFile}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
                 <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <LoadingDialog open={open} title={loadingText} />
+
+                <div className='text-center w-full justify-center'>
+                  <button
+                    className='btn btn-primary btn-soft btn-lg btn-wide disabled:opacity-50 disabled:'
+                    onClick={handleVerifier}
+                  >
+                    <FlaskConical /> Test Sample
+                  </button>
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <br />
+                  <LoadingDialog open={open} title={loadingText} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </Section>
       </main>
       <Footer />
     </div>

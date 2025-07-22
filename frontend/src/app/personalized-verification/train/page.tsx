@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import CurrentResults from '@/components/current-results';
 import { BrainCircuit, FlaskConical } from 'lucide-react';
 import QuickAlert from '@/components/quick-alert';
+import Section from '@/components/ui/section';
 
 export default function App() {
   const [files, setFiles] = useState<File[]>([]);
@@ -79,60 +80,62 @@ export default function App() {
     <div className='flex flex-col min-h-screen pt-10'>
       {/* Main content */}
       <main className='flex-grow'>
-        <div className='hero h-full'>
-          <div className='hero-content'>
-            <div className='max-w-xl'>
-              <h1 className='text-3xl font-bold text-center mt-10'>
-                Personalized Writer Verification
-              </h1>
-              <p className='py-6 text-md'>
-                This verification takes a bit longer than the normal
-                verification, as it provides reasoning behind model decisions.
-                For best results, please upload at least 3 known samples of the
-                writer you want to verify. A model will be trained on these
-                samples.
-              </p>
-              {resultsAvailable && <CurrentResults data={currentResults} />}
-              <h2 className='py-6 text-md font-bold'>
-                Upload known samples here
-              </h2>
-              <FileUploadComponent
-                limit={10}
-                value={files}
-                onValueChange={setFiles}
-              />
-              <br />
-              <br />
-              <div className='text-center w-full'>
-                <button
-                  className='btn btn-primary btn-soft btn-lg btn-wide'
-                  onClick={handleTrainVerifier}
-                >
-                  <BrainCircuit /> Train Verifier
-                </button>
-                <AlertDialog open={trainingComplete}>
-                  <AlertDialogContent>
-                    <div className='text-center'>
-                      <AlertDialogTitle>Training Complete!</AlertDialogTitle>
-                      <br />
-                      <p className='text-sm text-left mb-4'>
-                        Model is trained successfully. You can now upload a test
-                        sample to verify the writer's identity.
-                      </p>
-                      <Link href='/personalized-verification'>
-                        <button className='btn btn-primary btn-soft btn-lg btn-wide'>
-                          <FlaskConical /> Test Sample
-                        </button>
-                      </Link>
-                    </div>
-                  </AlertDialogContent>
-                </AlertDialog>
-                <LoadingDialog open={open} title='Training Model...' />
-                <QuickAlert open={qVOpen} />
+        <Section>
+          <div className='hero h-full'>
+            <div className='hero-content'>
+              <div className='max-w-xl'>
+                <h1 className='text-3xl font-bold text-center mt-10'>
+                  Personalized Writer Verification
+                </h1>
+                <p className='py-6 text-md'>
+                  This verification takes a bit longer than the normal
+                  verification, as it provides reasoning behind model decisions.
+                  For best results, please upload at least 3 known samples of
+                  the writer you want to verify. A model will be trained on
+                  these samples.
+                </p>
+                {resultsAvailable && <CurrentResults data={currentResults} />}
+                <h2 className='py-6 text-md font-bold'>
+                  Upload known samples here
+                </h2>
+                <FileUploadComponent
+                  limit={10}
+                  value={files}
+                  onValueChange={setFiles}
+                />
+                <br />
+                <br />
+                <div className='text-center w-full'>
+                  <button
+                    className='btn btn-primary btn-soft btn-lg btn-wide'
+                    onClick={handleTrainVerifier}
+                  >
+                    <BrainCircuit /> Train Verifier
+                  </button>
+                  <AlertDialog open={trainingComplete}>
+                    <AlertDialogContent>
+                      <div className='text-center'>
+                        <AlertDialogTitle>Training Complete!</AlertDialogTitle>
+                        <br />
+                        <p className='text-sm text-left mb-4'>
+                          Model is trained successfully. You can now upload a
+                          test sample to verify the writer's identity.
+                        </p>
+                        <Link href='/personalized-verification'>
+                          <button className='btn btn-primary btn-soft btn-lg btn-wide'>
+                            <FlaskConical /> Test Sample
+                          </button>
+                        </Link>
+                      </div>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <LoadingDialog open={open} title='Training Model...' />
+                  <QuickAlert open={qVOpen} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </Section>
       </main>
       <Footer />
     </div>

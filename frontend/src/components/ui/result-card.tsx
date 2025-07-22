@@ -8,14 +8,7 @@ export default function Home({
   confidence: number;
   type: 'module1' | 'module2' | 'module3';
 }) {
-  const [card_confidence, setCardConfidence] = useState(0);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCardConfidence(confidence);
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, []);
+  const card_confidence = confidence;
   let text: string;
   let title: string;
   switch (type) {
