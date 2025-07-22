@@ -13,8 +13,7 @@ export default function App() {
   const router = useRouter();
   const params = useParams();
   const taskId = params.taskId;
-  const [differentWriter, setDifferentWriter] = useState(false);
-  const [personalizedWriterSame, setPersonalizedWriterSame] = useState(false);
+  const [sameWriter, setSameWriter] = useState(false);
   const [description, setDescription] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [currentResults, setCurrentResults] = useState({
@@ -47,12 +46,17 @@ export default function App() {
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const response = await res.json();
         setDescription(response.description || 'No description available.');
-        if (response.same_writer === 0) {
-          setDifferentWriter(true);
-          result['personalizedWriterSame'] = false;
-        } else {
-          setPersonalizedWriterSame(true);
+        if (response.same_writer === true) {
           result['personalizedWriterSame'] = true;
+        }
+        const atLeastTwoTrue =
+          [result.sigGenuine, result.writerSame, result.sameWriter].filter(
+            Boolean
+          ).length >= 2;
+        console.log(atLeastTwoTrue);
+
+        if (atLeastTwoTrue) {
+          setSameWriter(true);
         }
         result['personalizedWriterConfidence'] = response.confidence;
         setCurrentResults(result);
@@ -76,27 +80,30 @@ export default function App() {
                   Personalized Writer Verification Report
                 </h1>
                 <br />
-                {differentWriter ? (
-                  <h2 className='text-2xl font-bold text-center'>
-                    Written by <Emphasis type='red'>Different Writers</Emphasis>
-                  </h2>
+                {sameWriter ? (
+                  <>
+                    <h2 className='text-2xl font-bold text-center'>
+                      Written by the{' '}
+                      <Emphasis type='green'>Same Writer</Emphasis>
+                    </h2>
+                    <p className='py-6 text-md max-w-lg mx-auto'>
+                      The sample you provided has been verified to be written by
+                      the same writer. You can proceed with further analysis or
+                      actions based on the below report.
+                    </p>
+                  </>
                 ) : (
-                  <h2 className='text-2xl font-bold text-center'>
-                    Written by the <Emphasis type='green'>Same Writer</Emphasis>
-                  </h2>
-                )}
-                {differentWriter ? (
-                  <p className='py-6 text-md max-w-lg mx-auto'>
-                    The sample you provided could not be verified. It appears to
-                    be written by someone else. Please review the report below
-                    for more details.
-                  </p>
-                ) : (
-                  <p className='py-6 text-md max-w-lg mx-auto'>
-                    The sample you provided has been verified to be written by
-                    the same writer. You can proceed with further analysis or
-                    actions based on the below report.
-                  </p>
+                  <>
+                    <h2 className='text-2xl font-bold text-center'>
+                      Written by{' '}
+                      <Emphasis type='red'>Different Writers</Emphasis>
+                    </h2>
+                    <p className='py-6 text-md max-w-lg mx-auto'>
+                      The sample you provided could not be verified. It appears
+                      to be written by someone else. Please review the report
+                      below for more details.
+                    </p>
+                  </>
                 )}
                 <div className='flex items-center justify-center'>
                   <PvResults data={currentResults} />
@@ -161,7 +168,7 @@ export default function App() {
                   alt='Reconstruction Error'
                   className='w-full h-auto rounded-lg shadow-md max-w-3xl mx-auto'
                 />
-                {personalizedWriterSame ? (
+                {currentResults.personalizedWriterSame ? (
                   <>
                     <h2 className='py-6 text-lg font-bold  max-w-3xl mx-auto'>
                       Most Normal Features

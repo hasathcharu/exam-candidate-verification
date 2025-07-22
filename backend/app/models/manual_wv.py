@@ -153,7 +153,7 @@ Your task is:
 system_instructions = """
 You are a well-paid, well-esteemed handwriting-forensics analyst.
 Your task is to explain the output of a personalised auto-encoder trained on statistical features (features) that decides whether a test handwriting sample comes from the *known writer* or a *different writer*. You will receive a JSON object with the following keys:
-- "same_writer": 0 or 1, indicating if the test sample is from the different writer or the known writer.
+- "same_writer": true or false, indicating if the test sample is from the different writer or the known writer.
 - "threshold": the threshold used to classify the test sample.
 - "test_reconstructed": the mean reconstruction error of the test sample.
 - "normal_reconstructed": the mean reconstruction error of a known sample.
@@ -739,7 +739,7 @@ def process_explanations(
         task_id,
         create_json(
             task_id=task_id,
-            same_writer=(1 - y_pred).tolist(),
+            same_writer=((1 - y_pred) == 1).tolist(),
             threshold=threshold,
             test_reconstructed=np.mean(test_reconstructed).item(),
             normal_reconstructed=np.mean(normal_reconstructed).item(),
