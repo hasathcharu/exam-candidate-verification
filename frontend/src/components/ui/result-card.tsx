@@ -25,11 +25,11 @@ export default function Home({
       break;
     case 'module2':
       title = 'Quick Handwriting Verification';
-      text = result ? 'Genuine Handwriting' : 'Unverified Handwriting';
+      text = result ? 'Same Writer' : 'Different Writer';
       break;
     default:
       title = 'Personalized Handwriting Verification';
-      text = result ? 'Genuine Handwriting' : 'Unverified Handwriting';
+      text = result ? 'Same Writer' : 'Different Writer';
       break;
   }
   const CONFIDENCE_THRESHOLD = parseFloat(

@@ -115,7 +115,7 @@ export default function App() {
                     <div className='text-center'>
                       <AlertDialogTitle>Training Complete!</AlertDialogTitle>
                       <br />
-                      <p className='text-sm text-justify mb-4'>
+                      <p className='text-sm text-left mb-4'>
                         Model is trained successfully. You can now upload a test
                         sample to verify the writer's identity.
                       </p>
