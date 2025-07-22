@@ -1,6 +1,6 @@
 import shutil
 from flask import Blueprint, request, jsonify
-from ..models.manual_wv import perform_manual_writer_verification
+from ..models.manual_wv import create_personalized_verification_task, create_personalized_verification_explanation, create_personalized_verification_interpretation
 from ..models.automatic_wv import perform_automatic_writer_verification
 from ..models.automatic_wv import perform_pairwise_automatic_writer_verification
 from ..models.ofsfd import predict_signature_type
@@ -10,8 +10,8 @@ from werkzeug.exceptions import InternalServerError
 FILE_PATH = os.path.dirname(__file__)
 predict_bp = Blueprint("predict", __name__)
 
-@predict_bp.route("/advanced-writer-verification", methods=["POST"])
-def manual_writer_verification():
+@predict_bp.route("/personalized-writer-verification/create", methods=["POST"])
+def create_personalized_verification_task_route():
     if not os.path.exists(f"{FILE_PATH}/../cache/manual_wv/writer.weights.h5"):
         return jsonify({"error": "Model not trained"}), 400
     if "file" not in request.files:
@@ -19,11 +19,40 @@ def manual_writer_verification():
     image = request.files["file"]
     if image.filename == "":
         return jsonify({"error": "No selected file"}), 400
+    if "quick_result" not in request.files:
+        return jsonify({"error": "No quick_result file"}), 400
+    quick_result = request.files.get("quick_result")
+    if quick_result.filename == "":
+        return jsonify({"error": "No quick_result file"}), 400
     os.makedirs(f"{FILE_PATH}/../cache/manual_wv/samples", exist_ok=True)
     image.save(f"{FILE_PATH}/../cache/manual_wv/samples/test.png")
     
-    result = perform_manual_writer_verification()
-    return jsonify({"result": f"{result}"}), 200
+    result = create_personalized_verification_task(quick_result)
+    return jsonify(result), 200
+
+@predict_bp.route("/personalized-writer-verification/explain", methods=["POST"])
+def explain_personalized_verification():
+    data = request.get_json()
+    if not data or "task_id" not in data:
+        return jsonify({"error": "Missing task_id"}), 400
+
+    task_id = data["task_id"]
+    if not os.path.exists(f"{FILE_PATH}/../cache/manual_wv/writer.weights.h5"):
+        return jsonify({"error": "Model not trained"}), 400
+    result = create_personalized_verification_explanation(task_id)
+    return jsonify({'result': result}), 200
+
+@predict_bp.route("/personalized-writer-verification/interpret", methods=["POST"])
+def interpret_personalized_verification():
+    data = request.get_json()
+    if not data or "task_id" not in data:
+        return jsonify({"error": "Missing task_id"}), 400
+
+    task_id = data["task_id"]
+    if not os.path.exists(f"{FILE_PATH}/../cache/manual_wv/writer.weights.h5"):
+        return jsonify({"error": "Model not trained"}), 400
+    result = create_personalized_verification_interpretation(task_id)
+    return jsonify({'result': result}), 200
 
 @predict_bp.route("/automatic-writer-verification", methods=["POST"])
 def automatic_writer_verification():
