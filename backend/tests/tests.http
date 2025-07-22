@@ -4,16 +4,33 @@ GET http://localhost:8000/api/v1/reset
 ### Check Train Status
 GET http://localhost:8000/api/v1/train/status
 
-### Advanced Writer Verification
-POST http://localhost:8000/api/v1/predict/advanced-writer-verification
+### Personalized Writer Verification - Create Task
+POST http://localhost:8000/api/v1/predict/personalized-writer-verification/create
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="file"; filename="sample.png"
-Content-Type: text/plain
+Content-Type: image/png
 
 < ./manual_wv/test.png
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Personalized Writer Verification - Create Explanations
+POST http://localhost:8000/api/v1/predict/personalized-writer-verification/explain
+Content-Type: application/json
+
+{
+  "task_id": "hoYXUJaGwLM"
+}
+
+### Personalized Writer Verification - Create Interpretations
+POST http://localhost:8000/api/v1/predict/personalized-writer-verification/interpret
+Content-Type: application/json
+
+{
+  "task_id": "hoYXUJaGwLM"
+}
+
 
 ### Train Advanced Writer Verification Model
 POST http://localhost:8000/api/v1/train
@@ -81,3 +98,35 @@ Content-Type: image/png
 
 < ./automatic_wv/file2_fast.png
 ------WebKitFormBoundary7MA4YWxkTrZu0g--
+
+### Pairwise Automatic Writer Verification
+POST http://localhost:8000/api/v1/predict/pairwise-writer-verification
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0g
+
+------WebKitFormBoundary7MA4YWxkTrZu0g
+Content-Disposition: form-data; name="file1_normal"; filename="file1_normal.png"
+Content-Type: image/png
+
+< ./automatic_wv/file1_normal.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file1_fast"; filename="file1_fast.png"
+Content-Type: image/png
+
+< ./automatic_wv/file1_fast.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file2_normal"; filename="file2_normal.png"
+Content-Type: image/png
+
+< ./automatic_wv/file2_normal.png
+------WebKitFormBoundary7MA4YWxkTrZu0g
+
+Content-Disposition: form-data; name="file2_fast"; filename="file2_fast.png"
+Content-Type: image/png
+
+< ./automatic_wv/file2_fast.png
+------WebKitFormBoundary7MA4YWxkTrZu0g--
+
+
+
