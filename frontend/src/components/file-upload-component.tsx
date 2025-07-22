@@ -1,6 +1,5 @@
 'use client';
 import { toast } from 'sonner';
-import { Toaster } from "@/components/ui/sonner"
 import {
   FileUpload,
   FileUploadDropzone,
@@ -14,48 +13,56 @@ import {
 import { Upload, X } from 'lucide-react';
 import * as React from 'react';
 
-export function FileUploadComponent({ limit = 1, value=[], onValueChange }: { limit?: number, value?: File[], onValueChange?: (files: File[]) => void }) {
-
+export function FileUploadComponent({
+  limit = 1,
+  value = [],
+  onValueChange,
+}: {
+  limit?: number;
+  value?: File[];
+  onValueChange?: (files: File[]) => void;
+}) {
   const onFileReject = React.useCallback((file: File, message: string) => {
     toast.error(message, {
       description: `"${
         file.name.length > 20 ? `${file.name.slice(0, 20)}...` : file.name
       }" has been rejected.`,
       duration: 3000,
-      
     });
   }, []);
 
   return (
     <FileUpload
       maxFiles={limit}
-      maxSize={25 * 1024 * 1024}
-      className='w-full'
+      maxSize={100 * 1024 * 1024}
+      className='w-full my-4'
       value={value}
       onValueChange={onValueChange}
       onFileReject={onFileReject}
       required
       multiple={limit > 1}
     >
-      <FileUploadDropzone>
+      <FileUploadDropzone className='rounded-3xl'>
         <div className='flex flex-col items-center gap-1 text-center'>
-          <div className='flex items-center justify-center rounded-full border p-2.5'>
+          <div className='flex items-center justify-center rounded-2xl border p-2.5'>
             <Upload className='size-6 text-muted-foreground' />
           </div>
-          <p className='font-medium text-sm'>Drop your sample{limit > 1? 's':''} here!</p>
+          <p className='font-medium text-sm'>
+            Drop your sample{limit > 1 ? 's' : ''} here!
+          </p>
           <p className='text-muted-foreground text-xs'>
             Or click to browse (max {limit} {limit > 1 ? 'files' : 'file'}, up
-            to 25MB{limit > 1 ? ' each' : ''})
+            to 100MB{limit > 1 ? ' each' : ''})
           </p>
         </div>
         <FileUploadTrigger asChild>
-          <button className='btn btn-block'>Choose File</button>
+          <button className='btn btn-block btn-ghost'>Choose File</button>
         </FileUploadTrigger>
       </FileUploadDropzone>
       <FileUploadList>
         {value.map((file, index) => (
-          <FileUploadItem key={index} value={file}>
-            <FileUploadItemPreview />
+          <FileUploadItem key={index} value={file} className='rounded-3xl'>
+            <FileUploadItemPreview className='rounded-sm' />
             <FileUploadItemMetadata />
             <FileUploadItemDelete asChild>
               <button className='btn btn-circle'>
