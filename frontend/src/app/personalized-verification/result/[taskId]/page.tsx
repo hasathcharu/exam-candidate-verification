@@ -8,6 +8,9 @@ import Emphasis from '@/components/ui/emphasis';
 import PvResults from '@/components/pv-results';
 import { FlaskConical, Sparkles, Trash2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import Section from '@/components/ui/section';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export default function App() {
   const router = useRouter();
@@ -53,8 +56,6 @@ export default function App() {
           [result.sigGenuine, result.writerSame, result.sameWriter].filter(
             Boolean
           ).length >= 2;
-        console.log(atLeastTwoTrue);
-
         if (atLeastTwoTrue) {
           setSameWriter(true);
         }
@@ -68,12 +69,12 @@ export default function App() {
     };
     fetchData();
   }, []);
-
+  if (!loaded) return null;
   return (
-    loaded && (
-      <div className='flex flex-col min-h-screen pt-10'>
-        <main className='flex-grow'>
-          <div className='hero h-full'>
+    <div className='flex flex-col min-h-screen pt-10'>
+      <main className='flex-grow'>
+        <Section>
+          <motion.div className='hero h-full'>
             <div className='hero-content'>
               <div className='max-w-[1024px]'>
                 <h1 className='text-3xl font-bold text-center mt-10'>
@@ -105,9 +106,9 @@ export default function App() {
                     </p>
                   </>
                 )}
-                <div className='flex items-center justify-center'>
+                <motion.div className='flex items-center justify-center'>
                   <PvResults data={currentResults} />
-                </div>
+                </motion.div>
                 <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
                   Signature Sample
                 </h2>
@@ -129,21 +130,27 @@ export default function App() {
                 <div className='flex gap-10 mb-3 max-w-3xl mx-auto'>
                   <figure className='diff aspect-16/9 rounded-3xl' tabIndex={0}>
                     <div className='diff-item-1' role='img' tabIndex={0}>
-                      <img
+                      <Image
                         alt='Known Sample'
                         src={
                           process.env.NEXT_PUBLIC_API +
                           `results/${taskId}/known.png`
                         }
+                        loading='eager'
+                        width={1000}
+                        height={750}
                       />
                     </div>
                     <div className='diff-item-2' role='img'>
-                      <img
+                      <Image
                         alt='Test Sample'
                         src={
                           process.env.NEXT_PUBLIC_API +
                           `results/${taskId}/test.png`
                         }
+                        loading='eager'
+                        width={1000}
+                        height={750}
                       />
                     </div>
                     <div className='diff-resizer'></div>
@@ -232,10 +239,10 @@ export default function App() {
                 </div>
               </div>
             </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
+          </motion.div>
+        </Section>
+      </main>
+      <Footer />
+    </div>
   );
 }

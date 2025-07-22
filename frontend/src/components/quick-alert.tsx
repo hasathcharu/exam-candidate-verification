@@ -14,7 +14,7 @@ export default function ({ open }: { open: boolean }) {
           <div className='text-center'>
             <AlertDialogTitle>Try with Quick Verification</AlertDialogTitle>
             <br />
-            <p className='text-sm text-justify mb-4'>
+            <p className='text-sm text-left mb-4'>
               Personalized verification requires a quick verification to be performed first. Therfore, please perform the quick verification first.
             </p>
             <Link href='/quick-verification'>
