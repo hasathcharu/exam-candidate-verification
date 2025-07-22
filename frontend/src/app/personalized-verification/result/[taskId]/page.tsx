@@ -1,25 +1,22 @@
 'use client';
 import Footer from '@/components/footer';
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Markdown from '@/components/ui/markdown';
-import ImageViewer from '@/components/ui/image-viewer';
 import Emphasis from '@/components/ui/emphasis';
 import PvResults from '@/components/pv-results';
 import { FlaskConical, Sparkles, Trash2 } from 'lucide-react';
-import QuickAlert from '@/components/quick-alert';
+import { useParams } from 'next/navigation';
 
 export default function App() {
   const router = useRouter();
+  const params = useParams();
+  const taskId = params.taskId;
   const [differentWriter, setDifferentWriter] = useState(false);
   const [personalizedWriterSame, setPersonalizedWriterSame] = useState(false);
   const [description, setDescription] = useState('');
-  const [resetButtonLoading, setResetButtonLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [resultsAvailable, setResultsAvailable] = useState(false);
-  const [qVOpen, setQVOpen] = useState(false);
   const [currentResults, setCurrentResults] = useState({
     sigGenuine: false,
     sigConfidence: 0.0,
@@ -30,19 +27,19 @@ export default function App() {
   });
 
   useEffect(() => {
-    let storage = localStorage.getItem('quick_result');
-    let result: any = {};
-    if (storage) {
-      setResultsAvailable(true);
-      result = JSON.parse(storage || '{}');
-    } else {
-      router.push('/quick-verification');
-      return;
-    }
     const fetchData = async () => {
       try {
+        const quickRes = await fetch(
+          process.env.NEXT_PUBLIC_API + `results/${taskId}/quick_result.json`,
+          {
+            method: 'GET',
+          }
+        );
+        if (!quickRes.ok)
+          throw new Error(`${quickRes.status} ${quickRes.statusText}`);
+        const result = await quickRes.json();
         const res = await fetch(
-          process.env.NEXT_PUBLIC_API + 'results/result.json',
+          process.env.NEXT_PUBLIC_API + `results/${taskId}/result.json`,
           {
             method: 'GET',
           }
@@ -52,10 +49,11 @@ export default function App() {
         setDescription(response.description || 'No description available.');
         if (response.same_writer === 0) {
           setDifferentWriter(true);
+          result['personalizedWriterSame'] = false;
         } else {
           setPersonalizedWriterSame(true);
+          result['personalizedWriterSame'] = true;
         }
-        result['personalizedWriterSame'] = response.same_writer;
         result['personalizedWriterConfidence'] = response.confidence;
         setCurrentResults(result);
         setLoaded(true);
@@ -67,21 +65,6 @@ export default function App() {
     fetchData();
   }, []);
 
-  async function handleReset() {
-    setResetButtonLoading(true);
-    try {
-      const res = await fetch(process.env.NEXT_PUBLIC_API + 'reset', {
-        method: 'GET',
-      });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      router.push('/personalized-verification');
-      setResetButtonLoading(false);
-    } catch (err: any) {
-      toast.error('Resetting model failed. Something went wrong.');
-      console.log(err);
-      setResetButtonLoading(false);
-    }
-  }
   return (
     loaded && (
       <div className='flex flex-col min-h-screen pt-10'>
@@ -116,15 +99,18 @@ export default function App() {
                   </p>
                 )}
                 <div className='flex items-center justify-center'>
-                  {resultsAvailable && <PvResults data={currentResults} />}
+                  <PvResults data={currentResults} />
                 </div>
                 <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
                   Signature Sample
                 </h2>
                 <img
-                        alt='Signature Sample'
-                        src={process.env.NEXT_PUBLIC_API + 'results/test-sig.png'}
-                        className='w-72 h-32 rounded-3xl object-fill'
+                  alt='Signature Sample'
+                  src={
+                    process.env.NEXT_PUBLIC_API +
+                    `results/${taskId}/test-sig.png`
+                  }
+                  className='w-72 h-32 rounded-3xl object-fill'
                 />
                 <h2 className='py-6 text-lg font-bold max-w-3xl mx-auto'>
                   Handwriting Samples
@@ -138,20 +124,28 @@ export default function App() {
                     <div className='diff-item-1' role='img' tabIndex={0}>
                       <img
                         alt='Known Sample'
-                        src={process.env.NEXT_PUBLIC_API + 'results/known.png'}
+                        src={
+                          process.env.NEXT_PUBLIC_API +
+                          `results/${taskId}/known.png`
+                        }
                       />
                     </div>
                     <div className='diff-item-2' role='img'>
                       <img
                         alt='Test Sample'
-                        src={process.env.NEXT_PUBLIC_API + 'results/test.png'}
+                        src={
+                          process.env.NEXT_PUBLIC_API +
+                          `results/${taskId}/test.png`
+                        }
                       />
                     </div>
                     <div className='diff-resizer'></div>
                   </figure>
                 </div>
                 <h2 className='py-6 pb-1 text-lg mx-auto font-bold max-w-3xl'>
-                  <Emphasis type='ai'><Sparkles size={20} /> Personalized Explanation</Emphasis>
+                  <Emphasis type='ai'>
+                    <Sparkles size={20} /> Personalized Explanation
+                  </Emphasis>
                 </h2>
                 <div className='py-6 mx-auto'>
                   <Markdown text={description} />
@@ -162,7 +156,7 @@ export default function App() {
                 <img
                   src={
                     process.env.NEXT_PUBLIC_API +
-                    'results/reconstructed_error.png'
+                    `results/${taskId}/reconstructed_error.png`
                   }
                   alt='Reconstruction Error'
                   className='w-full h-auto rounded-lg shadow-md max-w-3xl mx-auto'
@@ -175,7 +169,7 @@ export default function App() {
                     <img
                       src={
                         process.env.NEXT_PUBLIC_API +
-                        'results/neg_waterfall.png'
+                        `results/${taskId}/neg_waterfall.png`
                       }
                       alt='Most Normal Features'
                       className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
@@ -185,7 +179,8 @@ export default function App() {
                     </h2>
                     <img
                       src={
-                        process.env.NEXT_PUBLIC_API + 'results/neg_heatmap.png'
+                        process.env.NEXT_PUBLIC_API +
+                        `results/${taskId}/neg_heatmap.png`
                       }
                       alt='Normal Feature Heatmap'
                       className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
@@ -199,7 +194,7 @@ export default function App() {
                     <img
                       src={
                         process.env.NEXT_PUBLIC_API +
-                        'results/pos_waterfall.png'
+                        `results/${taskId}/pos_waterfall.png`
                       }
                       alt='Most Anomalous Features'
                       className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
@@ -209,7 +204,8 @@ export default function App() {
                     </h2>
                     <img
                       src={
-                        process.env.NEXT_PUBLIC_API + 'results/pos_heatmap.png'
+                        process.env.NEXT_PUBLIC_API +
+                        `results/${taskId}/pos_heatmap.png`
                       }
                       alt='Anomalous Feature Heatmap'
                       className='w-full h-auto rounded-lg shadow-md  max-w-3xl mx-auto'
@@ -226,22 +222,6 @@ export default function App() {
                   </Link>
                   <br />
                   <br />
-                  {!resetButtonLoading ? (
-                    <button
-                      className='btn btn-info btn-soft btn-lg btn-wide'
-                      onClick={handleReset}
-                    >
-                      <Trash2 /> Retrain Model
-                    </button>
-                  ) : (
-                    <button
-                      className='btn btn-ghost btn-soft btn-lg btn-wide'
-                      onClick={handleReset}
-                      disabled
-                    >
-                      <span className='loading loading-infinity'></span>
-                    </button>
-                  )}
                 </div>
               </div>
             </div>

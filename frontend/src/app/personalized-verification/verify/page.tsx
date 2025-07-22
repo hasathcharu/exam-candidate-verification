@@ -2,7 +2,6 @@
 import Footer from '@/components/footer';
 import { FileUploadComponent } from '@/components/file-upload-component';
 import { useEffect, useState } from 'react';
-import { AlertDialog, AlertDialogContent } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import LoadingDialog from '@/components/loading-dialog';
@@ -23,6 +22,7 @@ export default function App() {
     writerSame: false,
     writerConfidence: 0.0,
   });
+  const [loadingMessage, setLoadingMessage] = useState('Identifying Writer Quirks...');
 
   useEffect(() => {
     const result = localStorage.getItem('quick_result');
@@ -58,16 +58,47 @@ export default function App() {
       : '.png';
     const filename = `test${ext}`;
     formData.append(field, files[0], filename);
+    const blob = new Blob([JSON.stringify(currentResults)], { type: 'application/json' });
+    formData.append('quick_result', blob, 'quick_result.json');
     try {
       const res = await fetch(
-        process.env.NEXT_PUBLIC_API + 'predict/advanced-writer-verification',
+        process.env.NEXT_PUBLIC_API + 'predict/personalized-writer-verification/create',
         {
           method: 'POST',
           body: formData,
         }
       );
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      router.push('/personalized-verification/result');
+      if (!res.ok) throw new Error(`Create Failed. ${res.status} ${res.statusText}`);
+      const respose = await res.json();
+      const taskId = respose.task_id;
+      const taskData = {
+        task_id: taskId,
+      }
+      setLoadingMessage('Analyzing Writer Data...');
+      const exp_res = await fetch(
+        process.env.NEXT_PUBLIC_API + 'predict/personalized-writer-verification/explain',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(taskData),
+        }
+      );
+      if (!exp_res.ok) throw new Error(`Explain Failed. ${res.status} ${res.statusText}`);
+      setLoadingMessage('Creating Explanations...');
+      const int_res = await fetch(
+        process.env.NEXT_PUBLIC_API + 'predict/personalized-writer-verification/interpret',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(taskData),
+        }
+      );
+      if (!int_res.ok) throw new Error(`Interpret Failed. ${res.status} ${res.statusText}`);
+      router.push('/personalized-verification/result/' + taskId);
       setOpen(false);
     } catch (err: any) {
       setOpen(false);
@@ -142,7 +173,7 @@ export default function App() {
                     <span className='loading loading-infinity'></span>
                   </button>
                 )}
-                <LoadingDialog open={open} title='Generating Report...' />
+                <LoadingDialog open={open} title={loadingMessage} />
                 <QuickAlert open={qVOpen} />
               </div>
             </div>

@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import shutil
 from openai import OpenAI
+import secrets
 
 client = OpenAI()
 
@@ -135,47 +136,48 @@ Here is the output of the autoencoder.
 
 Your task is:
 
-1. Select five key features
-   - If "same_writer" == 0 (classified as different writer),
-     sort pos_sum descending and choose the top five indices.
-   - If "same_writer" == 1 (classified as known writer),
-     sort neg_sum ascending (most negative) and choose the top five.
+1. Select five key features and explain what they indicate about the handwriting characteristics of the test sample.
+   - If "same_writer" == 0 (classified as different writer), explain the top_5_pos_sum.
+   - If "same_writer" == 1 (classified as known writer), explain the top_5_neg_sum.
 
 2. Produce the markdown table using:
    | Feature | Normal Value | Test Value | What to look for |
 
 3. Four-paragraph narrative
-   - Para 1: friendly recap of the verdict and confidence.  
-   - Para 2: explain what the table shows.  
-   - Para 3: highlight any cross-feature interactions the model may have noticed.  
-   - Para 4: summarise how reconstruction errors and SHAP together led to the decision.
+   - Para 1: introduce the model's decision.
+   - Para 2: explain what the table shows, then attach the table.
+   - Para 3: summarize the key features and their relationship to the decision. if there are inter-related features, explain how they work together.
+   - Para 4: summarize the overall results. instruct the user to be cautious about the explanation, and ask them to confirm with the supplied graphs and images.
 """
 
 system_instructions = """
 You are a well-paid, well-esteemed handwriting-forensics analyst.
-Your task is to explain the output of a personalised auto-encoder trained on statistical features (feature_names) that decides
-whether a test handwriting sample comes from the *known writer* or a *different writer*. You will receive a JSON object with the following keys:
+Your task is to explain the output of a personalised auto-encoder trained on statistical features (features) that decides whether a test handwriting sample comes from the *known writer* or a *different writer*. You will receive a JSON object with the following keys:
 - "same_writer": 0 or 1, indicating if the test sample is from the different writer or the known writer.
-- "score": the average reconstruction error of the test sample.
 - "threshold": the threshold used to classify the test sample.
+- "test_reconstructed": the mean reconstruction error of the test sample.
+- "normal_reconstructed": the mean reconstruction error of a known sample.
 - "confidence": a float between 0 and 1, indicating the model's confidence in its prediction.
-- "test_features": the test sample's features
-- "normal_features": the known writer's features.
-- "test_reconstructed": a list of reconstruction errors for each feature in the test sample.
-- "normal_reconstructed": a list of reconstruction errors for each feature in the known writer's sample.
-- "pos_sum": a list of positive SHAP values for each feature in the test sample.
-- "neg_sum": a list of negative SHAP values for each feature in the test sample.
-- "features_names": a list of feature names corresponding to the reconstruction errors.
+    - "features": a list of dictionaries, each containing:
+    - "feature": the name of the feature.
+    - "normal": the mean value of the feature for the known writer.
+    - "test": the mean value of the feature for the test sample.
+- "top_5_pos_sum": a dictionary of the top 5 features with the highest positive SHAP values.
+- "top_5_neg_sum": a dictionary of the top 5 features with the lowest negative SHAP values.
+- "task_id": a unique identifier for the task, you can ignore this.
+
+Additional instructions:
+
 - For Contour-Hinge Principal Components, just say "They explain shape and curvature of letters by analyzing the angles between contour segments. Look for differences in curvature and angles between segments in the handwriting."
 - For Letter 'e' Shape Descriptors, just say "They capture the shape of the letter 'e' in the handwriting. Look for differences in the shape and curvature of the letter 'e' between the two samples."
 - For the rest of the features, compare the values in the test sample with those of the known writer, and explain what the differences indicate about the handwriting characteristics of the test sample.
 
-Output requirements
+Output requirements:
 - ≤ 400 words total, plain English, warm yet professional, explanatory, third person.  
-- Use exactly four short paragraphs with *topics*.  
+- Use exactly four short paragraphs *with headings*.  
 - Include one markdown table, formatted like the template below; no other tables or lists.  
 - Refer to the two classes only as “known writer” and “different writer”.  
-- Do not number headings.  
+- Do not number headings, but use bold for each heading.  
 - Keep each cell in the “What to look for” column ≤ 50 words.  
 - Do not mention SHAP, reconstruction error, or threshold outside the explanation paragraph.
 
@@ -208,6 +210,63 @@ global_feature_headers = [
     "viz_middle",
     "viz_lower",
 ]
+
+
+def create_json(
+    task_id,
+    same_writer=None,
+    threshold=None,
+    test_reconstructed=None,
+    normal_reconstructed=None,
+    confidence=None,
+    features=None,
+    top_5_pos_sum=None,
+    top_5_neg_sum=None,
+    description=None,
+):
+    json_data = {}
+
+    if same_writer is not None:
+        json_data["same_writer"] = same_writer
+
+    if threshold is not None:
+        json_data["threshold"] = threshold
+
+    if test_reconstructed is not None:
+        json_data["test_reconstructed"] = test_reconstructed
+
+    if normal_reconstructed is not None:
+        json_data["normal_reconstructed"] = normal_reconstructed
+
+    if confidence is not None:
+        json_data["confidence"] = confidence
+
+    if features is not None:
+        json_data["features"] = features
+
+    if top_5_pos_sum is not None:
+        json_data["top_5_pos_sum"] = top_5_pos_sum
+
+    if top_5_neg_sum is not None:
+        json_data["top_5_neg_sum"] = top_5_pos_sum
+
+    if description is not None:
+        json_data["description"] = description
+
+    json_data["task_id"] = task_id
+
+    return json_data
+
+
+def save_json(task_id, json_data):
+    output_json_path = os.path.join(
+        FILE_PATH, f"../rcache/manual_wv/result/{task_id}/result.json"
+    )
+
+    os.makedirs(os.path.dirname(output_json_path), exist_ok=True)
+
+    with open(output_json_path, "w") as f:
+        json.dump(json_data, f, indent=2)
 
 
 def preprocess(img_path: str, sample: str = "test") -> None:
@@ -494,18 +553,29 @@ def build_feature_error_model(autoencoder, idx: int):
 
 
 def predict(x, model):
-    return np.square(x - model.predict(x, verbose=0))
+    return np.mean(np.square(x - model.predict(x, verbose=0)), axis=0)
 
 
 def process_explanations(
-    test_features_scaled: pd.DataFrame,
-    test_features: pd.DataFrame,
-    model: tf.keras.Model,
-    scaler,
-    threshold,
-    y_pred,
-    confidence: float,
+    task_id: str,
 ) -> None:
+
+
+    scaler = joblib.load(os.path.join(FILE_PATH, "../cache/manual_wv/scaler.pkl"))
+    test_features = pd.read_parquet(f"{all_features}/test.parquet")
+    test_features = test_features.drop(columns=["sample"])
+    test_features_scaled = scaler.transform(test_features)
+    model = build_global_autoencoder(test_features_scaled.shape[1])
+    model.load_weights(os.path.join(FILE_PATH, "../cache/manual_wv/writer.weights.h5"))
+    test_reconstructed = predict(test_features_scaled, model)
+    y_score = np.mean(test_reconstructed)
+    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.json"), "r") as f:
+        data = json.load(f)
+        threshold = data["threshold"]
+        max_error = data["max_error"]
+    y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
+    confidence = reconstruction_confidence(y_score, threshold)
+
     normal_features = pd.DataFrame()
     for file in os.listdir(all_features):
         if file.endswith(".parquet") and file.startswith("sample"):
@@ -515,9 +585,9 @@ def process_explanations(
     columns = normal_features.columns
     normal_features_scaled = scaler.transform(normal_features)
 
-    test_reconstructed = np.mean(predict(test_features_scaled, model), axis=0)
-    normal_reconstructed = np.mean(predict(normal_features_scaled, model), axis=0)
-    print("Test Reconstructed Error:", np.mean(test_reconstructed))
+    test_reconstructed = predict(test_features_scaled, model)
+    normal_reconstructed = predict(normal_features_scaled, model)
+
     plt.figure(figsize=(10, 7))
     plt.plot(test_reconstructed, label="Test Reconstructed Error")
     plt.plot(normal_reconstructed, label="Normal Reconstructed Error")
@@ -530,23 +600,33 @@ def process_explanations(
     plt.tight_layout()
     plt.legend()
     plt.savefig(
-        os.path.join(FILE_PATH, "../cache/manual_wv/result/reconstructed_error.png")
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/reconstructed_error.png")
     )
 
+    print(
+        "Prediction\t: ",
+        "\033[91m" + ("Same Writer" if y_pred == 0 else "Different Writer") + "\033[0m",
+    )
+    print("Score\t\t: ", "\033[91m" + str(y_score) + "\033[0m")
+    print("Threshold\t: ", "\033[91m" + str(threshold) + "\033[0m")
+    print("Confidence\t: ", "\033[91m" + str(confidence) + "\033[0m")
+
     pos_shap_values = pd.DataFrame(
-        columns=columns,
-        index=columns,
+        columns=desc_columns,
+        index=desc_columns,
         data=np.zeros((len(columns), len(columns))),
         dtype=float,
     )
+
     neg_shap_values = pd.DataFrame(
-        columns=columns,
-        index=columns,
+        columns=desc_columns,
+        index=desc_columns,
         data=np.zeros((len(columns), len(columns))),
         dtype=float,
     )
+
     background_set = normal_features_scaled
-    if (os.environ.get("EXP_ENABLED") == "true"):
+    if os.environ.get("EXP_ENABLED") == "true":
         for i in tqdm(range(len(columns)), desc="Computing SHAP values"):
             fe_model = build_feature_error_model(model, i)
             explainer = shap.DeepExplainer(fe_model, background_set)
@@ -579,7 +659,7 @@ def process_explanations(
         va="center",
     )
     plt.tight_layout()
-    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/pos_heatmap.png"))
+    plt.savefig(os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/pos_heatmap.png"))
 
     plt.figure(figsize=(15, 10))
     sns.heatmap(neg_shap_values, cmap="coolwarm", fmt=".2f")
@@ -600,7 +680,7 @@ def process_explanations(
         va="center",
     )
     plt.tight_layout()
-    plt.savefig(os.path.join(FILE_PATH, "../cache/manual_wv/result/neg_heatmap.png"))
+    plt.savefig(os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/neg_heatmap.png"))
 
     explanation = shap.Explanation(
         values=pos_sum,
@@ -611,7 +691,7 @@ def process_explanations(
     plt.figure(figsize=(15, 10))
     shap.plots.waterfall(explanation, show=False)
     plt.savefig(
-        os.path.join(FILE_PATH, "../cache/manual_wv/result/pos_waterfall.png"),
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/pos_waterfall.png"),
         bbox_inches="tight",
         pad_inches=0.2,
     )
@@ -625,42 +705,65 @@ def process_explanations(
     plt.figure(figsize=(15, 10))
     shap.plots.waterfall(explanation, show=False)
     plt.savefig(
-        os.path.join(FILE_PATH, "../cache/manual_wv/result/neg_waterfall.png"),
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/neg_waterfall.png"),
         bbox_inches="tight",
         pad_inches=0.2,
     )
 
     resize_and_save_image(
         os.path.join(FILE_PATH, "../cache/manual_wv/samples/sample1.png"),
-        os.path.join(FILE_PATH, "../cache/manual_wv/result/known.png"),
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/known.png"),
     )
 
     resize_and_save_image(
         os.path.join(FILE_PATH, "../cache/manual_wv/samples/test.png"),
-        os.path.join(FILE_PATH, "../cache/manual_wv/result/test.png"),
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/test.png"),
     )
 
     shutil.copy(
         os.path.join(FILE_PATH, "../cache/ofsfd/samples/test.png"),
-        os.path.join(FILE_PATH, "../cache/manual_wv/result/test-sig.png"),
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/test-sig.png"),
     )
 
-    json_data = {
-        "same_writer": ((1 - y_pred).tolist()),
-        "score": np.mean(test_reconstructed).item(),
-        "threshold": threshold,
-        "confidence": confidence,
-        "test_reconstructed": test_reconstructed.tolist(),
-        "normal_reconstructed": normal_reconstructed.tolist(),
-        "features_names": list(desc_columns),
-        "pos_sum": pos_sum.tolist(),
-        "neg_sum": neg_sum.tolist(),
-        "normal_features": normal_features.mean(axis=0).tolist(),
-        "test_features": test_features.mean(axis=0).tolist(),
-    }
+    top_5_pos = pos_sum.sort_values(ascending=False).head(5)
+    top_5_neg = neg_sum.sort_values(ascending=True).head(5)
 
+    combined = [
+        {"feature": name, "normal": n, "test": t}
+        for name, n, t in zip(
+            desc_columns, normal_features.mean(axis=0), test_features.mean(axis=0)
+        )
+    ]
+
+    save_json(
+        task_id,
+        create_json(
+            task_id=task_id,
+            same_writer=(1 - y_pred).tolist(),
+            threshold=threshold,
+            test_reconstructed=np.mean(test_reconstructed).item(),
+            normal_reconstructed=np.mean(normal_reconstructed).item(),
+            confidence=confidence,
+            features=combined,
+            top_5_pos_sum=dict(top_5_pos.sort_values(ascending=False).items()),
+            top_5_neg_sum=dict(top_5_neg.sort_values(ascending=False).items()),
+        ),
+    )
+
+def process_interpretation(
+    task_id: str,
+) -> None:
+    with open(
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/result.json"), "r"
+    ) as f:
+        json_data = json.load(f)
+
+    description = "Failed to generate the AI explanation due to an error."
     try:
-        if (os.environ.get("EXP_ENABLED") != "true"):
+        if (
+            os.environ.get("EXP_ENABLED") != "true"
+            or os.environ.get("GEN_EXPLANATION") != "true"
+        ):
             raise Exception("Explanation generation is disabled.")
         explanation = client.responses.create(
             model="o3",
@@ -668,57 +771,64 @@ def process_explanations(
             instructions=system_instructions,
             input=prompt.format(json=json.dumps(json_data, indent=2)),
         )
-        json_data["description"] = explanation.output_text
+        description = explanation.output_text
     except Exception as e:
         print("Failed to generate content: %s", e)
-        json_data["description"] = (
-            "Failed to generate the AI explanation due to an error."
-        )
+    json_data["description"] = description
+    save_json(task_id, create_json(**json_data))
 
-    output_json_path = os.path.join(FILE_PATH, "../cache/manual_wv/result/result.json")
-
-    with open(output_json_path, "w") as f:
-        json.dump(json_data, f, indent=2)
 
 def reconstruction_confidence(error, threshold, sharpness=15):
     sigmoid = lambda x: 1 / (1 + math.exp(-sharpness * abs(x)))
     confidence = sigmoid(error - threshold)
     return confidence
 
-def perform_manual_writer_verification(
-    img_path: str = "cache/manual_wv/samples/test.png",
+
+def create_personalized_verification_task(
+    quick_result, img_path: str = "cache/manual_wv/samples/test.png",
 ) -> bool:
     preprocess(f"{FILE_PATH}/../{img_path}", sample="test")
     extract_char_features("test")
     extract_line_features("test")
     prepare_all_features("test")
-    test_features = pd.read_parquet(f"{all_features}/test.parquet")
-    test_features = test_features.drop(columns=["sample"])
-    scaler = joblib.load(os.path.join(FILE_PATH, "../cache/manual_wv/scaler.pkl"))
-    test_features_scaled = scaler.transform(test_features)
-    model = build_global_autoencoder(test_features_scaled.shape[1])
-    model.load_weights(os.path.join(FILE_PATH, "../cache/manual_wv/writer.weights.h5"))
-    predict = model.predict(test_features_scaled, verbose=0)
-    y_scores = np.mean(np.square(test_features_scaled - predict), axis=1)
-    y_score = np.mean(y_scores)
-    with open(os.path.join(FILE_PATH, "../cache/manual_wv/threshold.json"), "r") as f:
-        data = json.load(f)
-        threshold = data["threshold"]
-        max_error = data["max_error"]
-    y_pred = np.where(np.array(y_score) <= threshold, 0, 1)
-    confidence = reconstruction_confidence(y_score, threshold)
-    print("Prediction\t: ", "\033[91m" + ("Same Writer" if y_pred == 0 else "Different Writer") + "\033[0m")
-    print("Score\t\t: ", "\033[91m" + str(y_score) + "\033[0m")
-    print("Threshold\t: ", "\033[91m" + str(threshold) + "\033[0m")
-    print("Confidence\t: ", "\033[91m" + str(confidence) + "\033[0m")
-    os.makedirs(os.path.join(FILE_PATH, "../cache/manual_wv/result"), exist_ok=True)
-    process_explanations(
-        test_features_scaled,
-        test_features,
-        model,
-        scaler,
-        threshold,
-        y_pred,
-        confidence,
-    )
-    return "Same Writer" if y_pred == 0 else "Different Writer"
+    task_id = None
+    while True:
+        try:
+            task_id = secrets.token_urlsafe(8)
+            os.makedirs(os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/"))
+            quick_result.save(f"{FILE_PATH}/../rcache/manual_wv/result/{task_id}/quick_result.json")
+            break
+        except FileExistsError:
+            continue
+    return {
+        "task_id": task_id,
+    }
+
+
+def create_personalized_verification_explanation(
+    task_id: str,
+) -> bool:
+    if not os.path.exists(
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}")
+    ):
+        raise InternalServerError(
+            "The task ID does not exist. Please create a new task."
+        )
+    process_explanations(task_id)
+    return {
+        "task_id": task_id,
+    }
+
+def create_personalized_verification_interpretation(
+    task_id: str,
+) -> bool:
+    if not os.path.exists(
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}")
+    ):
+        raise InternalServerError(
+            "The task ID does not exist. Please create a new task."
+        )
+    process_interpretation(task_id)
+    return {
+        "task_id": task_id,
+    }

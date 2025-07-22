@@ -8,7 +8,7 @@ export default function Emphasis({
   switch (type) {
     case 'green':
       return (
-        <span className='successgradient errorgradient text py-1 px-2 rounded-sm inline-flex items-center gap-2 justify-center'>{children}</span>
+        <span className='successgradient text py-1 px-2 rounded-sm inline-flex items-center gap-2 justify-center'>{children}</span>
       );
     case 'red':
       return (

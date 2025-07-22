@@ -17,15 +17,19 @@ export default function CompressedImage({ img }: { img: File }) {
         })
       );
     });
-  }, [img]);
-
-  if (!compressedImage) return null;
+  }, []);
 
   return (
-    <img
-      src={URL.createObjectURL(compressedImage)}
-      alt={compressedImage.name}
-      className="size-full object-cover"
-    />
+    <>
+      {compressedImage ? (
+        <img
+          src={URL.createObjectURL(compressedImage)}
+          alt={compressedImage.name}
+          className='size-full object-cover'
+        />
+      ) : (
+        <span className='loading loading-spinner loading-xs'></span>
+      )}
+    </>
   );
 }
