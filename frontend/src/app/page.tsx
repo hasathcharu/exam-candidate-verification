@@ -3,6 +3,7 @@ import AvCard from '@/components/av-card';
 import Footer from '@/components/footer';
 import Link from 'next/link';
 import Section from '@/components/ui/section';
+import { WandSparkles } from 'lucide-react';
 
 export default function App() {
   return (
@@ -23,14 +24,12 @@ export default function App() {
                   mode and we can get started!
                 </p>
                 <Link href='/quick-verification'>
-                  <button className='btn btn-primary btn-lg'>
-                    Get Started
+                  <button className='btn btn-white btn-lg'>
+                    <WandSparkles /> Get Started
                   </button>
                 </Link>
               </div>
-              
             </div>
-            
           </div>
         </Section>
       </main>
