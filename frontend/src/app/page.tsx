@@ -20,8 +20,7 @@ export default function App() {
                 </h1>
                 <p className='py-6'>
                   Welcome to our Writer Verification Service, designed and
-                  developed by Hikari Research. Pick your preferred verification
-                  mode and we can get started!
+                  developed by Hikari Research. Once you have your samples ready, let's get started!
                 </p>
                 <Link href='/quick-verification'>
                   <button className='btn btn-white btn-lg'>
