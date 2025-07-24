@@ -237,7 +237,7 @@ export default function App() {
                         <FileUploadComponent
                           limit={1}
                           value={kNormalFile}
-                          onValueChange={setKnownFile}
+                          onValueChange={setKNormalFile}
                         />
                       </div>
                       <div>

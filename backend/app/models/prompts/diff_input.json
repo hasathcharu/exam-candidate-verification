@@ -1,0 +1,319 @@
+{
+  "confidence": 0.68583740837966,
+  "features": [
+    {
+      "feature": "Number of Black Pixels",
+      "normal": 17034.658536585364,
+      "test": 18429.6
+    },
+    {
+      "feature": "Gray Level Threshold",
+      "normal": 177.70731707317074,
+      "test": 170.6
+    },
+    {
+      "feature": "Entropy of Gray Values",
+      "normal": 0.8698390942231934,
+      "test": 0.933312433033828
+    },
+    {
+      "feature": "Number of Interior Contours",
+      "normal": 10.975609756097562,
+      "test": 12.2
+    },
+    {
+      "feature": "Mean area of Interior Contours",
+      "normal": 213.89734987234988,
+      "test": 179.08686556499055
+    },
+    {
+      "feature": "Number of Exterior Curves",
+      "normal": 29.048780487804876,
+      "test": 35.0
+    },
+    {
+      "feature": "Number of Ultra-Fine Strokes",
+      "normal": 32.19512195121951,
+      "test": 63.7
+    },
+    {
+      "feature": "Number of Very Fine Strokes",
+      "normal": 403.9268292682927,
+      "test": 667.2
+    },
+    {
+      "feature": "Number of Fine Strokes",
+      "normal": 1294.0975609756097,
+      "test": 1315.8
+    },
+    {
+      "feature": "Number of Medium Strokes",
+      "normal": 724.9756097560976,
+      "test": 780.6
+    },
+    {
+      "feature": "Number of Bold Strokes",
+      "normal": 173.34146341463415,
+      "test": 175.8
+    },
+    {
+      "feature": "Number of Heavy Strokes",
+      "normal": 27.78048780487805,
+      "test": 26.0
+    },
+    {
+      "feature": "Mean Gap Between Words",
+      "normal": 36.096992573821844,
+      "test": 33.72119047619047
+    },
+    {
+      "feature": "Standard Deviation of Gap Between Words",
+      "normal": 17.707088403021512,
+      "test": 16.28789111419992
+    },
+    {
+      "feature": "Number of Words",
+      "normal": 8.146341463414634,
+      "test": 8.7
+    },
+    {
+      "feature": "Chaincode Histogram Right",
+      "normal": 445.4878048780488,
+      "test": 368.4
+    },
+    {
+      "feature": "Chaincode Histogram Down-Right",
+      "normal": 247.1219512195122,
+      "test": 274.6
+    },
+    {
+      "feature": "Chaincode Histogram Down",
+      "normal": 1057.121951219512,
+      "test": 1606.7
+    },
+    {
+      "feature": "Chaincode Histogram Down-Left",
+      "normal": 341.3170731707317,
+      "test": 237.4
+    },
+    {
+      "feature": "Chaincode Histogram Left",
+      "normal": 398.1707317073171,
+      "test": 298.1
+    },
+    {
+      "feature": "Chaincode Histogram Up-Left",
+      "normal": 270.780487804878,
+      "test": 295.5
+    },
+    {
+      "feature": "Chaincode Histogram Up",
+      "normal": 1027.4146341463415,
+      "test": 1600.3
+    },
+    {
+      "feature": "Chaincode Histogram Up-Right",
+      "normal": 330.9024390243902,
+      "test": 202.4
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 1",
+      "normal": -0.297917095923331,
+      "test": -3.7629406675013177
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 2",
+      "normal": 3.700915340786494,
+      "test": -0.6658027070032384
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 3",
+      "normal": 1.8021435206605798,
+      "test": -1.978817568491279
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 4",
+      "normal": 0.44847753751411484,
+      "test": -2.961543030715429
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 5",
+      "normal": -0.5375000080540134,
+      "test": -5.253675767282288
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 6",
+      "normal": 0.526434077871644,
+      "test": -0.13701624897942838
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 7",
+      "normal": -0.29569039178244777,
+      "test": -3.1572210173723403
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 8",
+      "normal": 0.46078694236547785,
+      "test": 1.4301596884240577
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 9",
+      "normal": 0.27189434025181647,
+      "test": -1.0484741391129178
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 10",
+      "normal": -0.4873846333931471,
+      "test": -1.930263774883155
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 11",
+      "normal": -1.7498823035102586,
+      "test": -0.18294994280600868
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 12",
+      "normal": -0.597758497117968,
+      "test": 0.4736994127735252
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 13",
+      "normal": -1.3185403874671826,
+      "test": -1.531984203683356
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 14",
+      "normal": -0.21612561711183154,
+      "test": 0.057050738815188407
+    },
+    {
+      "feature": "Contour-Hinge Principal Component 15",
+      "normal": -0.432000543202179,
+      "test": 1.7588088943370057
+    },
+    {
+      "feature": "Number of Strong Leftward Slant Components",
+      "normal": 1607.560975609756,
+      "test": 1272.5
+    },
+    {
+      "feature": "Number of Moderate-Strong Left Slant Components",
+      "normal": 76.6829268292683,
+      "test": 66.3
+    },
+    {
+      "feature": "Number of Moderate Left Slant Components",
+      "normal": 468.0975609756098,
+      "test": 485.5
+    },
+    {
+      "feature": "Number of Slight Left Slant Components",
+      "normal": 326.7560975609756,
+      "test": 416.3
+    },
+    {
+      "feature": "Number of Near Vertical Orientation Components",
+      "normal": 11165.780487804877,
+      "test": 12486.9
+    },
+    {
+      "feature": "Number of Slight Right Slant Components",
+      "normal": 386.8780487804878,
+      "test": 352.1
+    },
+    {
+      "feature": "Number of Moderate Right Slant Components",
+      "normal": 658.4146341463414,
+      "test": 448.6
+    },
+    {
+      "feature": "Number of Moderate-Strong Right Slant Components",
+      "normal": 123.4390243902439,
+      "test": 72.2
+    },
+    {
+      "feature": "Number of Strong Rightward Slant Components",
+      "normal": 2221.048780487805,
+      "test": 2829.2
+    },
+    {
+      "feature": "Number of Pixels in the Upper Region of the Line",
+      "normal": 848.0243902439024,
+      "test": 1209.9
+    },
+    {
+      "feature": "Number of Pixels in the Middle Region of the Line",
+      "normal": 15467.609756097561,
+      "test": 16250.2
+    },
+    {
+      "feature": "Number of Pixels in the Lower Region of the Line",
+      "normal": 719.0243902439024,
+      "test": 969.5
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 1",
+      "normal": 1.0662976720342516,
+      "test": 1.4121063375454441
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 2",
+      "normal": 1.1168194998151026,
+      "test": 1.0044701339620832
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 3",
+      "normal": 1.8578855709258022,
+      "test": 1.6167080662180866
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 4",
+      "normal": 1.4682213222728673,
+      "test": 1.1968692524285751
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 5",
+      "normal": 1.570153368863623,
+      "test": 1.2490973117446267
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 6",
+      "normal": 0.6138755569650655,
+      "test": 0.6533588990008091
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 7",
+      "normal": 0.8089454673246789,
+      "test": 1.0554944239352715
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 8",
+      "normal": 0.4267627104152371,
+      "test": 0.7030642242371876
+    },
+    {
+      "feature": "Letter 'e' Shape Descriptor 9",
+      "normal": 0.734815771693171,
+      "test": 1.1781938345883187
+    }
+  ],
+  "normal_reconstructed": 0.020531773709953214,
+  "same_writer": false,
+  "task_id": "eFP_TODa0tU",
+  "test_reconstructed": 0.11727733413640097,
+  "threshold": 0.06522867240242691,
+  "top_5_neg_sum": {
+    "Chaincode Histogram Down": -0.20367736999820404,
+    "Contour-Hinge Principal Component 5": -0.2466025863487672,
+    "Gray Level Threshold": -0.23750709084842264,
+    "Letter 'e' Shape Descriptor 8": -0.18768036047626296,
+    "Letter 'e' Shape Descriptor 9": -0.18672196704838587
+  },
+  "top_5_pos_sum": {
+    "Chaincode Histogram Down": 0.49666334665657813,
+    "Chaincode Histogram Up": 0.46021463971311377,
+    "Contour-Hinge Principal Component 5": 0.6788576360936565,
+    "Gray Level Threshold": 1.2632368239563387,
+    "Number of Ultra-Fine Strokes": 0.49661578074423296
+  }
+}
