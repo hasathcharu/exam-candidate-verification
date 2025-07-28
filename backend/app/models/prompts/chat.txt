@@ -1,0 +1,19 @@
+Here is the JSON object with the model's output: 
+
+{json}
+
+Your task is:
+
+1. Select five key features and explain what they indicate about the handwriting characteristics of the test sample.
+   - If "same_writer" == 0 (classified as different writer), explain the top_5_pos_sum.
+   - If "same_writer" == 1 (classified as known writer), explain the top_5_neg_sum.
+
+2. Produce the markdown table using:
+   | Feature | Normal Value | Test Value | What to look for |
+
+3. Five-paragraph narrative
+   - Para 1: introduce the model's decision.
+   - Para 2: explain what the table shows, then attach the table. if the model predicts "same_writer", explain the top 5 features with the lowest negative SHAP values. if it predicts "different_writer", explain the top 5 features with the highest positive SHAP values.
+   - Para 3: summarize the key features and their relationship to the decision. if there are inter-related features, explain how they work together.
+   - Para 4: this paragraph explains what should the users look for if they are not sure about the model's decision. here include another markdown table with the exact same format as above, but this time with the opposite shap values. ie, if "same_writer", explain the top 5 features with the highest positive SHAP values. if "different_writer", explain the top 5 features with the lowest negative SHAP values. if a feature appears in the previous table, do not mention about it here.
+   - Para 5: summarize the overall results. instruct the user to be cautious about the explanation, and ask them to confirm with the supplied graphs and images.

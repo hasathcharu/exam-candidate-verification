@@ -86,8 +86,8 @@ export default function App() {
         return;
       }
       const formData = new FormData();
-      formData.append('file1', questionedFile[0]);
-      formData.append('file2', knownFile[0]);
+      formData.append('file1', knownFile[0]);
+      formData.append('file2', questionedFile[0]);
       try {
         const response = await fetch(
           process.env.NEXT_PUBLIC_API + 'predict/automatic-writer-verification',
@@ -237,7 +237,7 @@ export default function App() {
                         <FileUploadComponent
                           limit={1}
                           value={kNormalFile}
-                          onValueChange={setKnownFile}
+                          onValueChange={setKNormalFile}
                         />
                       </div>
                       <div>

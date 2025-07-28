@@ -129,63 +129,6 @@ desc_columns = [
     "Letter 'e' Shape Descriptor 9",
 ]
 
-prompt = """
-Here is the output of the autoencoder. 
-
-{json}
-
-Your task is:
-
-1. Select five key features and explain what they indicate about the handwriting characteristics of the test sample.
-   - If "same_writer" == 0 (classified as different writer), explain the top_5_pos_sum.
-   - If "same_writer" == 1 (classified as known writer), explain the top_5_neg_sum.
-
-2. Produce the markdown table using:
-   | Feature | Normal Value | Test Value | What to look for |
-
-3. Four-paragraph narrative
-   - Para 1: introduce the model's decision.
-   - Para 2: explain what the table shows, then attach the table.
-   - Para 3: summarize the key features and their relationship to the decision. if there are inter-related features, explain how they work together.
-   - Para 4: summarize the overall results. instruct the user to be cautious about the explanation, and ask them to confirm with the supplied graphs and images.
-"""
-
-system_instructions = """
-You are a well-paid, well-esteemed handwriting-forensics analyst.
-Your task is to explain the output of a personalised auto-encoder trained on statistical features (features) that decides whether a test handwriting sample comes from the *known writer* or a *different writer*. You will receive a JSON object with the following keys:
-- "same_writer": true or false, indicating if the test sample is from the different writer or the known writer.
-- "threshold": the threshold used to classify the test sample.
-- "test_reconstructed": the mean reconstruction error of the test sample.
-- "normal_reconstructed": the mean reconstruction error of a known sample.
-- "confidence": a float between 0 and 1, indicating the model's confidence in its prediction.
-    - "features": a list of dictionaries, each containing:
-    - "feature": the name of the feature.
-    - "normal": the mean value of the feature for the known writer.
-    - "test": the mean value of the feature for the test sample.
-- "top_5_pos_sum": a dictionary of the top 5 features with the highest positive SHAP values.
-- "top_5_neg_sum": a dictionary of the top 5 features with the lowest negative SHAP values.
-- "task_id": a unique identifier for the task, you can ignore this.
-
-Additional instructions:
-
-- For Contour-Hinge Principal Components, just say "They explain shape and curvature of letters by analyzing the angles between contour segments. Look for differences in curvature and angles between segments in the handwriting."
-- For Letter 'e' Shape Descriptors, just say "They capture the shape of the letter 'e' in the handwriting. Look for differences in the shape and curvature of the letter 'e' between the two samples."
-- For the rest of the features, compare the values in the test sample with those of the known writer, and explain what the differences indicate about the handwriting characteristics of the test sample.
-
-Output requirements:
-- ≤ 400 words total, plain English, warm yet professional, explanatory, third person.  
-- Use exactly four short paragraphs *with headings*.  
-- Include one markdown table, formatted like the template below; no other tables or lists.  
-- Refer to the two classes only as “known writer” and “different writer”.  
-- Do not number headings, but use bold for each heading.  
-- Keep each cell in the “What to look for” column ≤ 50 words.  
-- Do not mention SHAP, reconstruction error, or threshold outside the explanation paragraph.
-
-Table template
-| Feature | Normal Value | Test Value | What to look for |
-|---------|--------------|------------|------------------|
-"""
-
 local_feature_headers = [
     "sample",
     *[f"hog_{i}" for i in range(9)],
@@ -248,7 +191,7 @@ def create_json(
         json_data["top_5_pos_sum"] = top_5_pos_sum
 
     if top_5_neg_sum is not None:
-        json_data["top_5_neg_sum"] = top_5_pos_sum
+        json_data["top_5_neg_sum"] = top_5_neg_sum
 
     if description is not None:
         json_data["description"] = description
@@ -492,7 +435,7 @@ def train_model() -> None:
     val = scaler.transform(val)
 
     model = build_global_autoencoder(all_features_df.shape[1])
-    model.load_weights(os.path.join(FILE_PATH, "../weights/pretrained.weights.h5"))
+    # model.load_weights(os.path.join(FILE_PATH, "../weights/pretrained.weights.h5"))
 
     es = EarlyStopping(monitor="val_loss", patience=15, restore_best_weights=True)
 
@@ -560,7 +503,6 @@ def process_explanations(
     task_id: str,
 ) -> None:
 
-
     scaler = joblib.load(os.path.join(FILE_PATH, "../cache/manual_wv/scaler.pkl"))
     test_features = pd.read_parquet(f"{all_features}/test.parquet")
     test_features = test_features.drop(columns=["sample"])
@@ -600,7 +542,9 @@ def process_explanations(
     plt.tight_layout()
     plt.legend()
     plt.savefig(
-        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/reconstructed_error.png")
+        os.path.join(
+            FILE_PATH, f"../rcache/manual_wv/result/{task_id}/reconstructed_error.png"
+        )
     )
 
     print(
@@ -659,10 +603,12 @@ def process_explanations(
         va="center",
     )
     plt.tight_layout()
-    plt.savefig(os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/pos_heatmap.png"))
+    plt.savefig(
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/pos_heatmap.png")
+    )
 
     plt.figure(figsize=(15, 10))
-    sns.heatmap(neg_shap_values, cmap="coolwarm", fmt=".2f")
+    sns.heatmap(np.abs(neg_shap_values), cmap="coolwarm", fmt=".2f")
     plt.title("SHAP Value Contributions to Low Reconstruction Errors")
     plt.xlabel("Input Features")
     plt.ylabel("Target (Reconstructed) Features")
@@ -680,7 +626,9 @@ def process_explanations(
         va="center",
     )
     plt.tight_layout()
-    plt.savefig(os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/neg_heatmap.png"))
+    plt.savefig(
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/neg_heatmap.png")
+    )
 
     explanation = shap.Explanation(
         values=pos_sum,
@@ -691,7 +639,9 @@ def process_explanations(
     plt.figure(figsize=(15, 10))
     shap.plots.waterfall(explanation, show=False)
     plt.savefig(
-        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/pos_waterfall.png"),
+        os.path.join(
+            FILE_PATH, f"../rcache/manual_wv/result/{task_id}/pos_waterfall.png"
+        ),
         bbox_inches="tight",
         pad_inches=0.2,
     )
@@ -705,7 +655,9 @@ def process_explanations(
     plt.figure(figsize=(15, 10))
     shap.plots.waterfall(explanation, show=False)
     plt.savefig(
-        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/neg_waterfall.png"),
+        os.path.join(
+            FILE_PATH, f"../rcache/manual_wv/result/{task_id}/neg_waterfall.png"
+        ),
         bbox_inches="tight",
         pad_inches=0.2,
     )
@@ -750,13 +702,46 @@ def process_explanations(
         ),
     )
 
+
 def process_interpretation(
     task_id: str,
 ) -> None:
     with open(
-        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/result.json"), "r"
+        os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/result.json"),
+        "r",
     ) as f:
         json_data = json.load(f)
+
+    with open(os.path.join(FILE_PATH, "prompts/sys_intructions.txt"), "r") as f:
+        system_instructions = f.read()
+    with open(os.path.join(FILE_PATH, "prompts/chat.txt"), "r") as f:
+        prompt = f.read()
+    with open(os.path.join(FILE_PATH, "prompts/diff_input.json"), "r") as f:
+        diff_input = json.load(f)
+    with open(os.path.join(FILE_PATH, "prompts/same_input.json"), "r") as f:
+        same_input = json.load(f)
+    with open(os.path.join(FILE_PATH, "prompts/diff_exp.txt"), "r") as f:
+        diff_exp = f.read()
+    with open(os.path.join(FILE_PATH, "prompts/same_exp.txt"), "r") as f:
+        same_exp = f.read()
+
+    messages = [
+        {"role": "system", "content": system_instructions},
+        {
+            "role": "user",
+            "content": prompt.format(json=json.dumps(diff_input, indent=2)),
+        },
+        {"role": "assistant", "content": diff_exp},
+        {
+            "role": "user",
+            "content": prompt.format(json=json.dumps(same_input, indent=2)),
+        },
+        {"role": "assistant", "content": same_exp},
+        {
+            "role": "user",
+            "content": prompt.format(json=json.dumps(json_data, indent=2)),
+        },
+    ]
 
     description = "Failed to generate the AI explanation due to an error."
     try:
@@ -768,8 +753,7 @@ def process_interpretation(
         explanation = client.responses.create(
             model="o3",
             reasoning={"effort": "medium"},
-            instructions=system_instructions,
-            input=prompt.format(json=json.dumps(json_data, indent=2)),
+            input=messages,
         )
         description = explanation.output_text
     except Exception as e:
@@ -785,7 +769,8 @@ def reconstruction_confidence(error, threshold, sharpness=15):
 
 
 def create_personalized_verification_task(
-    quick_result, img_path: str = "cache/manual_wv/samples/test.png",
+    quick_result,
+    img_path: str = "cache/manual_wv/samples/test.png",
 ) -> bool:
     preprocess(f"{FILE_PATH}/../{img_path}", sample="test")
     extract_char_features("test")
@@ -795,8 +780,12 @@ def create_personalized_verification_task(
     while True:
         try:
             task_id = secrets.token_urlsafe(8)
-            os.makedirs(os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/"))
-            quick_result.save(f"{FILE_PATH}/../rcache/manual_wv/result/{task_id}/quick_result.json")
+            os.makedirs(
+                os.path.join(FILE_PATH, f"../rcache/manual_wv/result/{task_id}/")
+            )
+            quick_result.save(
+                f"{FILE_PATH}/../rcache/manual_wv/result/{task_id}/quick_result.json"
+            )
             break
         except FileExistsError:
             continue
@@ -818,6 +807,7 @@ def create_personalized_verification_explanation(
     return {
         "task_id": task_id,
     }
+
 
 def create_personalized_verification_interpretation(
     task_id: str,
