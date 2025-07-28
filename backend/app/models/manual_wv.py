@@ -435,7 +435,7 @@ def train_model() -> None:
     val = scaler.transform(val)
 
     model = build_global_autoencoder(all_features_df.shape[1])
-    model.load_weights(os.path.join(FILE_PATH, "../weights/pretrained.weights.h5"))
+    # model.load_weights(os.path.join(FILE_PATH, "../weights/pretrained.weights.h5"))
 
     es = EarlyStopping(monitor="val_loss", patience=15, restore_best_weights=True)
 

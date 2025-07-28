@@ -77,7 +77,6 @@ export default function App() {
       console.log(err);
     }
   }
-  console.log(files);
   return (
     <div className='flex flex-col min-h-screen pt-10'>
       {/* Main content */}
