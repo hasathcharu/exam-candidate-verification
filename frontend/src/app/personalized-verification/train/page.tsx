@@ -4,7 +4,9 @@ import { FileUploadComponent } from '@/components/file-upload-component';
 import { useEffect, useState } from 'react';
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
@@ -75,7 +77,6 @@ export default function App() {
       console.log(err);
     }
   }
-  console.log(files);
   return (
     <div className='flex flex-col min-h-screen pt-10'>
       {/* Main content */}
@@ -113,16 +114,17 @@ export default function App() {
                     <BrainCircuit /> Train Verifier
                   </button>
                   <AlertDialog open={trainingComplete}>
-                    <AlertDialogContent>
-                      <div className='text-center'>
-                        <AlertDialogTitle>Training Complete!</AlertDialogTitle>
-                        <br />
-                        <p className='text-sm text-left mb-4'>
-                          Model is trained successfully. You can now upload a
-                          test sample to verify the writer's identity.
-                        </p>
+                    <AlertDialogContent className='gap-3'>
+                      <AlertDialogTitle>
+                        Training Complete!
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className='text-sm'>
+                        Model is trained successfully. You can now upload a test
+                        sample to verify the writer's identity.
+                      </AlertDialogDescription>
+                      <div className='text-right mt-2'>
                         <Link href='/personalized-verification'>
-                          <button className='btn btn-primary btn-soft btn-lg btn-wide'>
+                          <button className='btn btn-primary btn-soft'>
                             <FlaskConical /> Test Sample
                           </button>
                         </Link>

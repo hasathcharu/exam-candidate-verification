@@ -3,6 +3,7 @@ import AvCard from '@/components/av-card';
 import Footer from '@/components/footer';
 import Link from 'next/link';
 import Section from '@/components/ui/section';
+import { WandSparkles } from 'lucide-react';
 
 export default function App() {
   return (
@@ -19,18 +20,15 @@ export default function App() {
                 </h1>
                 <p className='py-6'>
                   Welcome to our Writer Verification Service, designed and
-                  developed by Hikari Research. Pick your preferred verification
-                  mode and we can get started!
+                  developed by Hikari Research. Once you have your samples ready, let's get started!
                 </p>
                 <Link href='/quick-verification'>
-                  <button className='btn btn-primary btn-lg'>
-                    Get Started
+                  <button className='btn btn-white btn-lg'>
+                    <WandSparkles /> Get Started
                   </button>
                 </Link>
               </div>
-              
             </div>
-            
           </div>
         </Section>
       </main>
