@@ -53,7 +53,7 @@ export default function App() {
           result['personalizedWriterSame'] = true;
         }
         const atLeastTwoTrue =
-          [result.sigGenuine, result.writerSame, result.sameWriter].filter(
+          [result.sigGenuine, result.writerSame, result.personalizedWriterSame].filter(
             Boolean
           ).length >= 2;
         if (atLeastTwoTrue) {
