@@ -12,7 +12,6 @@ import torch.nn.functional as F
 from torchvision import transforms
 from PIL import Image
 from ..helpers.automatic_wv.utils.constants import SIAMESE_MODEL_PATH, SIAMESE_PATH_ID, IMG_SIZE, TWO_SPEED_MODEL_PATH
-import gdown
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 FILE_PATH = os.path.dirname(__file__)
@@ -98,10 +97,7 @@ class PairNet(nn.Module):
     
 vit_embedder = ViTEmbedder(vit_backbone).to(device)
 SIAMESE_MODEL = SiameseViT(vit_embedder, proj_head).to(device)
-if not os.path.exists(SIAMESE_MODEL_PATH):
-    print(f"Model file not found at {SIAMESE_MODEL_PATH}. Downloading...")
-    os.makedirs(os.path.dirname(SIAMESE_MODEL_PATH), exist_ok=True)
-    gdown.download(f"https://drive.google.com/uc?id={SIAMESE_PATH_ID}", SIAMESE_MODEL_PATH, quiet=False)
+
 SIAMESE_MODEL.load_state_dict(torch.load(SIAMESE_MODEL_PATH, map_location=device))
 
 TWO_SPEED_MODEL = PairNet()
