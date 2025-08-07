@@ -43,3 +43,58 @@ that uses interpretable, manually engineered features.
 
 To ensure reliability and transparency, outputs from all modules are integrated through a voting mechanism, which consolidates the predictions into a final decision
 and to provide explanations for the final decision as well.
+
+## 🛠️ Installation and Setup
+
+### Backend Setup
+
+Navigate to the `backend` directory and run the following command to set up the environment:
+
+```bash
+pip install -r requirements.txt
+```
+
+Create a `.env` file in the `backend` directory with the following content:
+
+```plaintext
+OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+EXP_ENABLED=true
+GEN_EXPLANATION=true
+```
+
+### Frontend Setup
+
+Navigate to the `frontend` directory.
+
+Create a `.env.local` file in the `frontend` directory with the following content:
+
+```plaintext
+NEXT_PUBLIC_API=http://localhost:8000/api/v1/
+NEXT_PUBLIC_CONFIDENCE_THRESHOLD=0.6
+```
+
+Then run the following commands to install dependencies and build the frontend application:
+
+```bash
+npm install
+npm run build
+```
+
+### Running the Application
+
+To start the backend server, navigate to the `backend` directory and run:
+
+```bash
+python run.py
+```
+This will start the backend server on port `8000`.
+
+
+
+Then navigate to the `frontend` directory and start the frontend server with:
+
+```bash
+npm start
+```
+
+The frontend will be accessible at `http://localhost:3000`.
