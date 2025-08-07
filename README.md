@@ -32,7 +32,7 @@ It also integrates SHAP-based explanations to provide feature-level interpretabi
 
 ## 📐 High Level Architecture of the Overall System
 
-![System Architecture](assets\highlevel-architectur.jpg)
+![System Architecture](assets/highlevel-architecture.jpg)
 
 The system accepts both signature and handwriting samples. Initially, a rapid assessment is performed using the signature forgery detection module (Module 1) and the quick handwriting verification module (Module 2), both of which aim to provide a preliminary decision with high efficiency.
 
