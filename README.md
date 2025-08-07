@@ -1,6 +1,6 @@
 # ✍️ Exam Candidate Verification Through Handwritten Artifacts
 
-This repository contains our final year research project demonstration titled **Exam Candidate Verification Through Handwritten Artifacts**, completed at the **Faculty of Information Technology, University of Moratuwa, Sri Lanka**.
+This repository contains our final year research project demonstration titled **Exam Candidate Verification Through Handwritten Artifacts**, completed at the **Faculty of Information Technology, University of Moratuwa, Sri Lanka**, by the Team Hikari Research from Batch 20.
 
 Biometrics identify individuals using physical or behavioral traits. While physiological biometrics like fingerprints are common, handwriting remains a reliable behavioral biometric used in legal and educational settings. Questioned Document Examination (QDE) helps verify document authorship using handwriting. While physiological biometrics like fingerprints are widely used, handwriting remains crucial in education and assessments due to its resistance to forgery over long texts. However, manual handwriting verification is slow and expert-dependent, making it impractical in large-scale scenarios like exam fraud detection. Recent machine learning advancements offer a scalable solution, but lack of transparency limits trust in automated decisions. This project addresses that by integrating explainable handwriting verification, enabling users to understand and trust the system’s predictions.
 
@@ -38,11 +38,13 @@ It also integrates SHAP-based explanations to provide feature-level interpretabi
 
 The system accepts both signature and handwriting samples. Initially, a rapid assessment is performed using the signature forgery detection module (Module 1) and the quick handwriting verification module (Module 2), both of which aim to provide a preliminary decision with high efficiency.
 
-If the predictions from these independent modules are in agreement and demonstrate high confidence, a final verification decision is rendered. In scenarios where confidence is insu!cient or disagreement occurs, the system moves to a more thorough verification process using personalized writer verification module (Module 3). This involves acquiring additional handwriting samples and leveraging a personalized verification module
-that uses interpretable, manually engineered features.
+If the predictions from these independent modules are in agreement and demonstrate high confidence, a final verification decision is rendered. In scenarios where confidence is insufficient or disagreement occurs, the system moves to a more thorough verification process using personalized writer verification module (Module 3). This involves acquiring additional handwriting samples and leveraging a personalized verification module that uses interpretable, manually engineered features.
 
-To ensure reliability and transparency, outputs from all modules are integrated through a voting mechanism, which consolidates the predictions into a final decision
-and to provide explanations for the final decision as well.
+To ensure reliability and transparency, outputs from all modules are integrated through a voting mechanism, which consolidates the predictions into a final decision and to provide explanations for the final decision as well.
+
+## 🎥 Demonstration
+
+[![Demo Video](https://img.youtube.com/vi/rQLoM4VjMiI/0.jpg)](https://www.youtube.com/watch?v=rQLoM4VjMiI)
 
 ## 🛠️ Installation and Setup
 
