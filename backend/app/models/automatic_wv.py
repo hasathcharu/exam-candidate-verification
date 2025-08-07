@@ -3,52 +3,112 @@ from ..helpers.automatic_wv.texture_creation.texture_creation import create_text
 from werkzeug.exceptions import InternalServerError
 import os
 import matplotlib.pyplot as plt
-import tensorflow as tf
-import cv2
 import numpy as np
-from keras.saving import register_keras_serializable
-from tensorflow.keras import backend as K
 import re
-import joblib
+import torch
+import torch.nn as nn
+from transformers import ViTModel, ViTConfig
+import torch.nn.functional as F
+from torchvision import transforms
+from PIL import Image
+from ..helpers.automatic_wv.utils.constants import SIAMESE_MODEL_PATH, SIAMESE_PATH_ID, IMG_SIZE, TWO_SPEED_MODEL_PATH
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 FILE_PATH = os.path.dirname(__file__)
-IMG_SIZE = (224,224)
 
-@register_keras_serializable()
-def l2_normalize(x):
-    return tf.math.l2_normalize(x, axis=1)
+vit_name = "google/vit-base-patch16-384"
+config = ViTConfig.from_pretrained(vit_name)
+vit_backbone = ViTModel.from_pretrained(vit_name, config=config).to(device)
 
-@register_keras_serializable()
-def euclidean_distance(vects):
-    x, y = vects
-    sum_square = tf.reduce_sum(tf.square(x - y), axis=1, keepdims=True)
-    return tf.sqrt(tf.maximum(sum_square, K.epsilon()))
+class ViTEmbedder(nn.Module):
+    def __init__(self, vit_model):
+        super().__init__()
+        self.vit = vit_model
 
-@register_keras_serializable()
-def contrastive_loss(y_true, y_pred):
-    square_pred = tf.square(y_pred)
-    margin = 0.7
-    margin_square = tf.square(tf.maximum(margin - y_pred, 0))
-    return tf.reduce_mean((1 - y_true) * square_pred + y_true * margin_square)
+    def forward(self, x):
+        outputs = self.vit(pixel_values=x)     
+        return outputs.pooler_output          
 
-@register_keras_serializable()
-def output_shape(input_shapes):
-    return (input_shapes[0][0], 1)
+class ProjectionHead(nn.Module):
+    def __init__(self, in_dim=768, hidden_dims=[512, 256, 128], dropout=0.1):
+        super().__init__()
+        layers = []
+        prev = in_dim
+        for h in hidden_dims:
+            layers += [
+                nn.Linear(prev, h),
+                nn.LayerNorm(h),
+                nn.GELU(),
+            ]
+            prev = h
+        self.net = nn.Sequential(*layers)
 
-MODEL = tf.keras.models.load_model(
-os.path.join(FILE_PATH,"../weights/siamese_model.keras"),
-custom_objects={
-    "l2_normalize": l2_normalize,
-    "euclidean_distance": euclidean_distance,
-    "contrastive_loss": contrastive_loss,
-    "output_shape": output_shape
-},
-safe_mode=False
-)
-FEATURE_EXTRACTOR = MODEL.get_layer("cnn_backbone")
+    def forward(self, x):
+        z = self.net(x)        
+        return F.normalize(z, p=2, dim=1)
 
-CLF_PATH = os.path.abspath(os.path.join(FILE_PATH, "../weights/logistic_model.joblib"))
-clf = joblib.load(CLF_PATH)
+proj_head = ProjectionHead(
+    in_dim=768,
+    hidden_dims=[512, 256, 128],
+    dropout=0.1
+).to(device)
+
+class EuclideanDistance(nn.Module):
+    def __init__(self, eps: float = 1e-7):
+        super().__init__()
+        self.eps = eps
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        diff_sq = (x - y).pow(2)
+        sum_sq = diff_sq.sum(dim=1, keepdim=True)
+        sum_sq = torch.clamp(sum_sq, min=self.eps)
+        return torch.sqrt(sum_sq)
+    
+class SiameseViT(nn.Module):
+    def __init__(self, embedder, head):
+        super().__init__()
+        self.embedder = embedder
+        self.head = head
+        self.distance = EuclideanDistance()
+
+    def forward_once(self, img):
+        cls_emb = self.embedder(img)
+        emb = self.head(cls_emb)
+        return emb
+
+    def forward(self, img_a, img_b):
+        emb_a = self.forward_once(img_a)
+        emb_b = self.forward_once(img_b)
+        dist = self.distance(emb_a, emb_b)
+        return dist
+
+class PairNet(nn.Module):
+    def __init__(self):
+        super(PairNet, self).__init__()
+        self.fc1 = nn.Linear(6, 4)
+        self.fc2 = nn.Linear(4, 2)
+        self.out = nn.Linear(2, 1)
+        self.dropout = nn.Dropout(0.2)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        return self.out(x)
+    
+vit_embedder = ViTEmbedder(vit_backbone).to(device)
+SIAMESE_MODEL = SiameseViT(vit_embedder, proj_head).to(device)
+
+SIAMESE_MODEL.load_state_dict(torch.load(SIAMESE_MODEL_PATH, map_location=device))
+
+TWO_SPEED_MODEL = PairNet()
+checkpoint = torch.load(TWO_SPEED_MODEL_PATH, weights_only=False)
+TWO_SPEED_MODEL.load_state_dict(checkpoint["model_state_dict"])
+SPEED_THRESHOLD = checkpoint["best_threshold"]
+
+@torch.no_grad()
+def FEATURE_EXTRACTOR(texture_tensor):
+    cls_emb = SIAMESE_MODEL.embedder(texture_tensor)
+    return SIAMESE_MODEL.head(cls_emb)
 
 def preprocess_image(image, save_path=None):
     image = read_image(image)
@@ -59,26 +119,29 @@ def preprocess_image(image, save_path=None):
         plt.imsave(save_path, binary_image, cmap="gray")
     return binary_image
 
-def preprocess_image_for_vgg16(img_path):
-    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-    if img is None:
-        raise ValueError(f"Failed to read image: {img_path}")
-    img = cv2.resize(img, IMG_SIZE)
-    img = np.expand_dims(img, axis=-1)
-    img = np.repeat(img, 3, axis=-1)
-    img = img.astype(np.float32) / 255.0
-    img = np.expand_dims(img, axis=0)
-    return img
+transform = transforms.Compose([
+    transforms.Resize(IMG_SIZE),
+    transforms.Grayscale(num_output_channels=3), 
+    transforms.ToTensor(),
+    transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+])
 
+def preprocess_image_for_vit(img_path):
+    img = Image.open(img_path).convert("RGB") 
+    tensor = transform(img)      
+    return tensor.unsqueeze(0) 
+
+@torch.no_grad()
 def compute_embeddings(patches):
     embeddings = []
     for patch in patches:
-        input = preprocess_image_for_vgg16(patch)
-        embedding = FEATURE_EXTRACTOR.predict(input)
-        embeddings.append(embedding[0])
-    embeddings = np.stack(embeddings, axis=0)  
-    avg_embedding = np.mean(embeddings, axis=0)
-    return avg_embedding 
+        input_tensor = preprocess_image_for_vit(patch) 
+        input_tensor = input_tensor.to(device)        
+        embedding = FEATURE_EXTRACTOR(input_tensor)   
+        embeddings.append(embedding.squeeze(0).cpu().numpy()) 
+    embeddings = np.stack(embeddings, axis=0)         
+    avg_embedding = np.mean(embeddings, axis=0)    
+    return avg_embedding
 
 def preprocess_and_create_textures(input_path, binary_output_path, textures_output_dir, prefix):
     binary_image = preprocess_image(input_path, binary_output_path)
@@ -98,7 +161,6 @@ def preprocess_and_create_textures(input_path, binary_output_path, textures_outp
         if fname.endswith(".png")
     ], key=sort_key)
     return patch_files
-
 
 def perform_automatic_writer_verification(sample1_path, sample2_path):
     output_dir = os.path.join(FILE_PATH,"../cache/automatic_wv/normal/binary")
@@ -120,7 +182,7 @@ def perform_automatic_writer_verification(sample1_path, sample2_path):
     embedding1 = compute_embeddings(sample1_patches)
     embedding2 = compute_embeddings(sample2_patches)
     distance = np.linalg.norm(embedding1 - embedding2) 
-    threshold = 0.7173469662666321
+    threshold = 0.7371158
     same_writer = distance <= threshold
     return {
         "distance": float(distance),
@@ -179,10 +241,15 @@ def perform_pairwise_automatic_writer_verification(file1_normal_path, file1_fast
             scores["1F_vs_2F"],
         ]
     ])
-    label = clf.predict(X_new)[0]
-    prob = clf.predict_proba(X_new)[0,label]
 
+    X_tensor = torch.tensor(X_new, dtype=torch.float32).to(device)
+    TWO_SPEED_MODEL.eval()
+    with torch.no_grad():
+        output = TWO_SPEED_MODEL(X_tensor)
+        prob = torch.sigmoid(output).item()
+    
+    same_writer = prob <= SPEED_THRESHOLD
     return {
         "probability": float(prob),
-        "same_writer": bool(label == 0)
+        "same_writer": bool(same_writer)
     }

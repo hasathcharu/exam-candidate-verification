@@ -172,7 +172,5 @@ cython_debug/
 
 app/cache/
 app/rcache/
-
-app/models/best_model/
-app/weights/siamese_model.keras
-app/weights/ofsfd.pth
+app/weights/
+app/weights.zip
