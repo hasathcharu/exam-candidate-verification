@@ -10,12 +10,11 @@ Our solution is divided into three major modules:
 
 #### 1. **Signature Forgery Detection using Vision and Text Embeddings**
 
-This module detects offline signature forgeries using CLIP, without requiring prior samples from the individual. It addresses challenges like intra-personal variations common in exam settings. Instead of comparing signatures directly, the model uses visual–textual associations to assess authenticity.
+This module detects offline signature forgeries using CLIP, without requiring prior samples from the individual. It addresses challenges like intra-personal variations common in exam settings. Instead of comparing signatures directly, the model uses visual-textual associations to detect attempts to forge a signature.
 
 #### 2. **Quick Handwriting Verification with Automatic Feature Extraction**
 
-This module verifies handwriting using automatically extracted features from compact texture representations. It supports two verification modes:
-
+This module verifies handwriting using features extracted using a vision transformer from compact texture representations. It supports two verification modes:
 - Standard Mode: Uses one sample per writer.
 - Two-Speed Mode: Uses both normal and fast handwriting samples to handle intra-writer variability.
 
@@ -23,12 +22,12 @@ This approach is fast and accurate, though less interpretable than manual method
 
 #### 3. **Personalized Handwriting Verification with Manual Feature Extraction**
 
-This writer-dependent module uses manually extracted features to enhance explainability. It combines:
+This is the writer-dependent module which trains a model per each writer in manually extracted features to enhance explainability. It combines:
 
 - Global traits (e.g., pressure, curvature)
 - Local features from frequently used letters (like e)
 
-It also integrates SHAP-based explanations to provide feature-level interpretability, helping reviewers understand which handwriting traits influenced each decision.
+It also integrated LLM-assisted SHAP-based explanations to provide feature-level interpretability, helping reviewers understand which handwriting traits influenced each decision.
 
 ## 📐 High Level Architecture of the Overall System
 
@@ -65,9 +64,9 @@ The overall results with all three modules are shown in Table 1. In this approac
 | Standard Mode | Module 1 and 2 agree | 3039 | 2803 | 92.2% | 67.5% |
 | Standard Mode | All 3 modules used | 1461 | 1330 | 91.0% | 32.5% |
 | Standard Mode | Overall | 4500 | 4133 | 91.8% | 100% |
-| Two-speed Mode | Module 1 and 2 agree | 2498 | 2471 | 94.5% | 68.6% |
+| Two-speed Mode | Module 1 and 2 agree | 2498 | 2471 | 98.9% | 68.6% |
 | Two-speed Mode | All 3 modules used | 1142 | 1024 | 89.7% | 31.4% |
-| Two-speed Mode | Overall | 3640 | 3495 | 93.0% | 100% |
+| Two-speed Mode | Overall | 3640 | 3495 | 96.0% | 100% |
 
 **Table 3.** Module 2 and 3 metrics on the same test set
 | Mode | Module | Accuracy | Precision | Recall | F1 | FRR | FAR |
