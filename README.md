@@ -50,7 +50,7 @@ The overall system gives the final verdict based on a voting system between the 
 
 The system was tested on 15 writers from the private dataset, producing 450 comparisons in standard mode and 364 in two-speed mode, representing the maximum permutations. Module 3 used a leave-one-out strategy, training on all samples of a writer except the test sample; in two-speed mode, reconstruction errors from both test samples were averaged. Module 1 included 10 genuine and 10 forged signatures per writer; for different-writer comparisons, a cartesian product with forged signatures was used, and for same-writer comparisons, genuine signatures were used yielding 4,500 comparisons in standard mode and 3,640 in two-speed mode.
 
-The overall results with all three modules are shown in Table 1. Here, it is not considered whether the first two modules agree or disagree with each other, and proceed to module 3 only when needed. The results when taking this into consideration is shown in Table 2. The Table 3 shows the individual performance on the two writer verification systems (Module 1 and 2) on each scenario on the same test set.
+The overall results with all three modules are shown in Table 1. In this approach, Module 3 is used regardless of whether the first two modules agree or disagree. The more efficient hierarchical voting system where Module 3 is only consulted when the first two modules disagree is evaluated, and its results are presented in Table 2. The Table 3 shows the individual performance on the two writer verification systems (Module 1 and 2) on each scenario on the same test set.
  
 **Table 1.** Overall system metrics with all three modules
 | Mode | Accuracy | Precision | Recall | F1 | FRR | FAR |
