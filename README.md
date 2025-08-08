@@ -42,6 +42,41 @@ If the predictions from these independent modules are in agreement and demonstra
 
 To ensure reliability and transparency, outputs from all modules are integrated through a voting mechanism, which consolidates the predictions into a final decision and to provide explanations for the final decision as well.
 
+## 📊 Overall System Evaluation
+
+The overall system gives the final verdict based on a voting system between the two modules. The system was tested on two modes.
+- Using the standard sample comparison mode of module 2
+- Using the two-speed sample comparison mode of module 2
+
+The system was tested on 15 writers from the private dataset, producing 450 comparisons in standard mode and 364 in two-speed mode, representing the maximum permutations. Module 3 used a leave-one-out strategy, training on all samples of a writer except the test sample; in two-speed mode, reconstruction errors from both test samples were averaged. Module 1 included 10 genuine and 10 forged signatures per writer; for different-writer comparisons, a cartesian product with forged signatures was used, and for same-writer comparisons, genuine signatures were used yielding 4,500 comparisons in standard mode and 3,640 in two-speed mode.
+
+The overall results with all three modules are shown in Table 1. In this approach, Module 3 is used regardless of whether the first two modules agree or disagree. The more efficient hierarchical voting system where Module 3 is only consulted when the first two modules disagree is evaluated, and its results are presented in Table 2. The Table 3 shows the individual performance on the two writer verification systems (Module 1 and 2) on each scenario on the same test set.
+ 
+**Table 1.** Overall system metrics with all three modules
+| Mode | Accuracy | Precision | Recall | F1 | FRR | FAR |
+|------|----------|-----------|--------|----|-----|-----|
+| Standard Mode | 91.8% | 91.9% | 91.7% | 91.8% | 8.3% | 8.0% |
+| Two-speed Mode | 96.0% | 96.8% | 95.2% | 96.0% | 4.8% | 3.2% |
+
+
+**Table 2.** Staged verification system performance. Here Module 3 is only used to break ties
+| Mode | Scenario | Sample Count | Correct Predictions | Accuracy | Sample Ratio |
+|------|----------|:--------------:|:---------------------:|:----------:|:--------------:|
+| Standard Mode | Module 1 and 2 agree | 3039 | 2803 | 92.2% | 67.5% |
+| Standard Mode | All 3 modules used | 1461 | 1330 | 91.0% | 32.5% |
+| Standard Mode | Overall | 4500 | 4133 | 91.8% | 100% |
+| Two-speed Mode | Module 1 and 2 agree | 2498 | 2471 | 94.5% | 68.6% |
+| Two-speed Mode | All 3 modules used | 1142 | 1024 | 89.7% | 31.4% |
+| Two-speed Mode | Overall | 3640 | 3495 | 93.0% | 100% |
+
+**Table 3.** Module 2 and 3 metrics on the same test set
+| Mode | Module | Accuracy | Precision | Recall | F1 | FRR | FAR |
+|------|--------|----------|-----------|--------|----|-----|-----|
+| Standard Mode | Module 2 | 86.9% | 89.2% | 84.0% | 86.5% | 16.0% | 10.2% |
+| Standard Mode | Module 3 | 91.1% | 93.0% | 88.9% | 90.9% | 11.1% | 6.7% |
+| Two-speed Mode | Module 2 | 95.3% | 98.8% | 91.8% | 95.2% | 8.2% | 1.1% |
+| Two-speed Mode | Module 3 | 90.4% | 90.2% | 90.7% | 90.4% | 9.3% | 9.9% |
+
 ## 🎥 Demonstration
 
 [![Demo Video](https://img.youtube.com/vi/rQLoM4VjMiI/0.jpg)](https://www.youtube.com/watch?v=rQLoM4VjMiI)
