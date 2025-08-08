@@ -61,7 +61,7 @@ The overall results with all three modules are shown in Table 1. Here, it is not
 
 **Table 2.** Staged verification system performance. Here Module 3 is only used to break ties
 | Mode | Scenario | Sample Count | Correct Predictions | Accuracy | Sample Ratio |
-|------|----------|--------------|---------------------|----------|--------------|
+|------|----------|:--------------:|:---------------------:|:----------:|:--------------:|
 | Standard Mode | Module 1 and 2 agree | 3039 | 2803 | 92.2% | 67.5% |
 | Standard Mode | All 3 modules used | 1461 | 1330 | 91.0% | 32.5% |
 | Standard Mode | Overall | 4500 | 4133 | 91.8% | 100% |
