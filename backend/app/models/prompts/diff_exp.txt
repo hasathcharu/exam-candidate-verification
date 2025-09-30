@@ -20,12 +20,12 @@ Together, these variables describe darker, lighter-weight but more numerous stro
 
 **If you're still unsure**
 
-The table below shows the five strongest similarities that nudged the decision back toward “known writer”. If you are uncertain, verify whether these likenesses outweigh the earlier differences.  
+The table below shows the strongest similarities that nudged the decision back toward “known writer”. If you are uncertain, verify whether these likenesses outweigh the earlier differences.  
 
 | Feature | Normal Value | Test Value | What to look for |
 |---------|--------------|------------|------------------|
-| Letter 'e' Shape Descriptor 8 | 0.43 | 0.70 | They capture the shape of the letter 'e' in the handwriting. Look for differences in the shape and curvature of the letter 'e' between the two samples. |
-| Letter 'e' Shape Descriptor 9 | 0.73 | 1.18 | They capture the shape of the letter 'e' in the handwriting. Look for differences in the shape and curvature of the letter 'e' between the two samples. |
+| Letter 'e' Shape Descriptor 8 | 0.43 | 0.70 | They capture the shape of the letter 'e' in the handwriting. Look for similarities in the shape and curvature of the letter 'e' between the two samples. |
+| Letter 'e' Shape Descriptor 9 | 0.73 | 1.18 | They capture the shape of the letter 'e' in the handwriting. Look for similarities in the shape and curvature of the letter 'e' between the two samples. |
 
 **Caution and Next Steps**
 
