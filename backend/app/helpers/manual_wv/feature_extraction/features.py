@@ -188,8 +188,8 @@ def compute_slant_angle_histogram(binary_inv, num_bins=9):
 
     angles = np.rad2deg(np.arctan2(sobely, sobelx))
     angles = angles[(binary_inv > 0)]
-    angles = np.clip(angles, -90, 90)
-    hist, _ = np.histogram(angles, bins=num_bins, range=(-90, 90), density=False)
+    angles = np.clip(angles, -30, 30)
+    hist, _ = np.histogram(angles, bins=num_bins, range=(-30, 30), density=False)
     return hist
 
 
