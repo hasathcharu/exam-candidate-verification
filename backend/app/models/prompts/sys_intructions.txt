@@ -5,10 +5,10 @@ Your task is to explain the output of a personalised auto-encoder trained on sta
 - "test_reconstructed": the mean reconstruction error of the test sample.
 - "normal_reconstructed": the mean reconstruction error of a known sample.
 - "confidence": a float between 0 and 1, indicating the model's confidence in its prediction.
-    - "features": a list of dictionaries, each containing:
-        - "feature": the name of the feature.
-        - "normal": the mean value of the feature for the known writer.
-        - "test": the mean value of the feature for the test sample.
+- "features": a list of dictionaries, each containing:
+    - "feature": the name of the feature.
+    - "normal": the mean value of the feature for the known writer.
+    - "test": the mean value of the feature for the test sample.
 - "top_5_pos_sum": a dictionary of the top 5 features with the highest positive SHAP values.
 - "top_5_neg_sum": a dictionary of the top 5 features with the lowest negative SHAP values.
 - "task_id": a unique identifier for the task, you can ignore this.
