@@ -20,6 +20,10 @@ This module verifies handwriting using features extracted using a vision transfo
 
 This approach is fast and accurate, though less interpretable than manual methods.
 
+Module Source Code can be found [here](https://github.com/RashmiSandamini/writer-verification-vit).
+
+This work has been presented at the 3rd International Conference on Data Science & Artificial Intelligence (DS & AI) organized by the University of Peradeniya, Sri Lanka, and [has been published by Springer Nature](https://doi.org/10.1007/978-981-95-4409-7_5).
+
 #### 3. **Personalized Handwriting Verification with Manual Feature Extraction**
 
 This is the writer-dependent module which trains a model per each writer in manually extracted features to enhance explainability. It combines:
@@ -28,6 +32,10 @@ This is the writer-dependent module which trains a model per each writer in manu
 - Local features from frequently used letters (like e)
 
 It also integrated LLM-assisted SHAP-based explanations to provide feature-level interpretability, helping reviewers understand which handwriting traits influenced each decision.
+
+Module Source Code can be found [here](https://github.com/hasathcharu/writer-verification-autoencoders).
+
+This work has been presented at the 9th IEEE International Research Conference on Smart Computing and Systems Engineering (SCSE) organized by the University of Kelaniya, Sri Lanka, and [has been published by IEEE](https://doi.org/10.1109/SCSE70081.2026.11499956).
 
 ## 📐 High Level Architecture of the Overall System
 
@@ -134,3 +142,5 @@ npm start
 ```
 
 The frontend will be accessible at `http://localhost:3000`.
+
+Read more about this project [here](https://hasathcharu.com/projects/exam-candidate-verification).
